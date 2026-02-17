@@ -2,7 +2,15 @@
 
 AI Smart Prompts Optimized for any Agent, Any Model - with advanced caching, dynamic balancing, and enterprise-grade features.
 
-> **Note**: Screenshots of the application are available in the pull request description. To add your own dashboard screenshot, place it at `./docs/dashboard-screenshot.png`.
+## 📸 Screenshots
+
+### Landing Page
+![Landing Page](https://github.com/user-attachments/assets/e657b33a-8079-4611-a3ba-350d5f75cc7e)
+*Modern landing page with feature showcase and call-to-action buttons*
+
+### Pricing Page
+![Pricing Page](https://github.com/user-attachments/assets/5b726332-cacb-41e9-9c8d-c5dd55a9b2a9)
+*Transparent pricing with three tiers: Free, Pro, and Enterprise*
 
 ## 🚀 Features
 
