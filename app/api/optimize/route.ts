@@ -15,7 +15,7 @@ const OptimizeSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     // Get authenticated user from session
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
     const { data: { session } } = await supabase.auth.getSession()
 
     if (!session) {

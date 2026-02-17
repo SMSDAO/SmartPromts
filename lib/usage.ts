@@ -20,7 +20,7 @@ export async function checkUsageLimit(
   userId: string,
   tier: SubscriptionTier
 ): Promise<UsageCheckResult> {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   const { data: user } = await supabase
     .from('users')
@@ -70,14 +70,14 @@ export async function checkUsageLimit(
 
 // Increment usage count
 export async function incrementUsage(userId: string): Promise<void> {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   await supabase.rpc('increment_usage', { user_id: userId })
 }
 
 // Get usage stats
 export async function getUsageStats(userId: string) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   const { data: user } = await supabase
     .from('users')

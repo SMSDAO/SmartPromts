@@ -15,7 +15,7 @@ export interface User {
 
 // Get current user from session
 export async function getCurrentUser(): Promise<User | null> {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
@@ -33,7 +33,7 @@ export async function getCurrentUser(): Promise<User | null> {
 
 // Get user by ID
 export async function getUserById(userId: string): Promise<User | null> {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   
   const { data: user } = await supabase
     .from('users')
@@ -46,7 +46,7 @@ export async function getUserById(userId: string): Promise<User | null> {
 
 // Upsert user (create or update)
 export async function upsertUser(userId: string, email: string): Promise<User> {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   
   const now = new Date().toISOString()
   const resetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days from now
