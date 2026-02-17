@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Sparkles, Loader2, AlertCircle } from 'lucide-react'
+import { Sparkles, Loader2, AlertCircle, ArrowRight, Crown } from 'lucide-react'
+import Link from 'next/link'
 
 interface OptimizeResult {
   original: string
@@ -15,6 +16,7 @@ interface UsageInfo {
   remaining: number
   limit: number
   resetAt: string
+  tier?: string
 }
 
 export default function DashboardPage() {
@@ -41,7 +43,7 @@ export default function DashboardPage() {
     },
     onSuccess: (data) => {
       setResult(data.data)
-      setUsageInfo(data.usage)
+      setUsageInfo({ ...data.usage, tier: data.usage.tier || 'free' })
     },
   })
 
@@ -55,6 +57,9 @@ export default function DashboardPage() {
     })
   }
 
+  // Show upgrade CTA for free tier users
+  const showUpgradeCTA = usageInfo?.tier === 'free' || usageInfo?.limit === 10
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-8">
@@ -65,6 +70,33 @@ export default function DashboardPage() {
           Enhance your AI prompts for better results
         </p>
       </div>
+
+      {/* Upgrade CTA Banner for Free Tier */}
+      {showUpgradeCTA && (
+        <div className="mb-6 relative bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-6 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/50 to-blue-600/50 blur-3xl opacity-50" />
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-start space-x-4">
+              <Crown className="h-8 w-8 text-yellow-300 flex-shrink-0" />
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-1">
+                  Upgrade to Pro or Lifetime
+                </h3>
+                <p className="text-blue-100 text-sm">
+                  Get 1,000+ optimizations/month or unlimited with Lifetime Pass NFT
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/pricing"
+              className="flex-shrink-0 inline-flex items-center px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-all font-semibold shadow-lg"
+            >
+              View Plans
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      )}
 
       {usageInfo && (
         <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
