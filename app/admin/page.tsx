@@ -119,7 +119,7 @@ export default async function AdminPage() {
                 {users?.map((user) => (
                   <AdminUserRow key={user.id} user={user} />
                 ))}
-                {!users || users.length === 0 && (
+                {(!users || users.length === 0) && (
                   <tr>
                     <td
                       colSpan={6}

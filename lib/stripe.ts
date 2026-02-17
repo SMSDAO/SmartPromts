@@ -24,12 +24,11 @@ export function getTierFromPriceId(priceId: string): StripeTier {
     throw new Error('Stripe price IDs are not configured')
   }
 
-  if (priceId === STRIPE_PRICE_IDS.pro) return 'pro'
-  if (priceId === STRIPE_PRICE_IDS.enterprise) return 'enterprise'
-  if (priceId === STRIPE_PRICE_IDS.lifetime) return 'lifetime'
-  
-  // Don't default to free for unrecognized price IDs
-  if (priceId === STRIPE_PRICE_IDS.free) return 'free'
+  // Match against configured price IDs
+  if (STRIPE_PRICE_IDS.pro && priceId === STRIPE_PRICE_IDS.pro) return 'pro'
+  if (STRIPE_PRICE_IDS.enterprise && priceId === STRIPE_PRICE_IDS.enterprise) return 'enterprise'
+  if (STRIPE_PRICE_IDS.lifetime && priceId === STRIPE_PRICE_IDS.lifetime) return 'lifetime'
+  if (STRIPE_PRICE_IDS.free && priceId === STRIPE_PRICE_IDS.free) return 'free'
   
   throw new Error(`Unrecognized Stripe price ID: ${priceId}`)
 }

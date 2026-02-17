@@ -19,6 +19,10 @@
     "STRIPE_SECRET_KEY": "@stripe-secret-key",
     "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY": "@stripe-publishable-key",
     "STRIPE_WEBHOOK_SECRET": "@stripe-webhook-secret",
-    "NEXT_PUBLIC_APP_URL": "@app-url"
+    "STRIPE_PRICE_ID_LIFETIME": "@stripe-lifetime-price-id",
+    "NEXT_PUBLIC_APP_URL": "@app-url",
+    "NFT_CONTRACT_ADDRESS": "@nft-contract-address",
+    "BASE_RPC_URL": "@base-rpc-url",
+    "ADMIN_EMAIL": "@admin-email"
   }
 }

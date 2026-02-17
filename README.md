@@ -39,7 +39,8 @@ AI Smart Prompts Optimized for any Agent, Any Model - with advanced caching, dyn
 
 ### Prerequisites
 
-- Node.js 18+ and npm/yarn
+- **Node.js 20+** for frontend/web app (Node.js 24+ recommended for admin tooling)
+- npm 10+ or yarn
 - Supabase account (free tier works)
 - OpenAI API account
 - Stripe account (test mode for development)

@@ -57,8 +57,9 @@ export default function DashboardPage() {
     })
   }
 
-  // Show upgrade CTA for free tier users
-  const showUpgradeCTA = usageInfo?.tier === 'free' || usageInfo?.limit === 10
+  // Show upgrade CTA for free tier users (limit of 10)
+  const FREE_TIER_LIMIT = 10
+  const showUpgradeCTA = usageInfo?.tier === 'free' || usageInfo?.limit === FREE_TIER_LIMIT
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
