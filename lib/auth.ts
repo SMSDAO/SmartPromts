@@ -1,7 +1,7 @@
 import { createServerSupabaseClient } from './supabase'
 import { NextResponse } from 'next/server'
 
-export type SubscriptionTier = 'free' | 'pro' | 'enterprise'
+export type SubscriptionTier = 'free' | 'pro' | 'enterprise' | 'lifetime' | 'admin'
 
 export interface User {
   id: string
@@ -11,6 +11,7 @@ export interface User {
   stripe_subscription_id: string | null
   usage_count: number
   usage_reset_at: string
+  banned: boolean
 }
 
 // Get current user from session
@@ -59,6 +60,7 @@ export async function upsertUser(userId: string, email: string): Promise<User> {
       subscription_tier: 'free',
       usage_count: 0,
       usage_reset_at: resetAt,
+      banned: false,
       updated_at: now,
     }, {
       onConflict: 'id',

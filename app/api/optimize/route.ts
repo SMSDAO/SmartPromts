@@ -31,6 +31,14 @@ export async function POST(req: NextRequest) {
     // Upsert user to ensure they exist in database
     const user = await upsertUser(userId, email)
 
+    // Check if user is banned
+    if (user.banned) {
+      return NextResponse.json(
+        { error: 'Account banned - Please contact support' },
+        { status: 403 }
+      )
+    }
+
     // Rate limiting - 10 requests per minute per user
     const rateLimitResult = rateLimit(`optimize:${userId}`, {
       interval: 60 * 1000,
