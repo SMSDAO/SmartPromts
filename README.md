@@ -113,13 +113,26 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
 -- Create policies
+-- Users can read their own data
 CREATE POLICY "Users can read own data"
   ON users FOR SELECT
   USING (auth.uid() = id);
 
-CREATE POLICY "Users can update own data"
+-- Users can only update their own non-billing fields
+-- Billing-related fields (subscription_tier, usage_count, Stripe IDs, usage_reset_at)
+-- can only be updated by service role (server-side code)
+CREATE POLICY "Users can update own profile only"
   ON users FOR UPDATE
-  USING (auth.uid() = id);
+  USING (auth.uid() = id)
+  WITH CHECK (
+    auth.uid() = id
+    -- Prevent users from modifying billing/subscription fields
+    AND subscription_tier = (SELECT subscription_tier FROM users WHERE id = auth.uid())
+    AND usage_count = (SELECT usage_count FROM users WHERE id = auth.uid())
+    AND usage_reset_at = (SELECT usage_reset_at FROM users WHERE id = auth.uid())
+    AND stripe_customer_id IS NOT DISTINCT FROM (SELECT stripe_customer_id FROM users WHERE id = auth.uid())
+    AND stripe_subscription_id IS NOT DISTINCT FROM (SELECT stripe_subscription_id FROM users WHERE id = auth.uid())
+  );
 ```
 
 ### 4. Stripe Configuration
@@ -153,6 +166,47 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 3. Add all environment variables from `.env.local`
 4. Deploy!
 5. Update Stripe webhook URL to your production domain
+
+### ⚠️ Production Considerations
+
+**Rate Limiting**: The current in-memory rate limiter does not work in serverless/distributed environments. For production:
+- Use [Vercel KV](https://vercel.com/docs/storage/vercel-kv) (Redis)
+- Use [Upstash Redis](https://upstash.com/)
+- Or implement rate limiting in Supabase with a dedicated table
+
+**Usage Tracking Race Condition**: The usage check and increment are not atomic. For high-concurrency production:
+- Use PostgreSQL row-level locking with `FOR UPDATE`
+- Or implement the check/increment in a single Supabase RPC function
+- Example SQL function:
+  ```sql
+  CREATE OR REPLACE FUNCTION check_and_increment_usage(
+    p_user_id UUID,
+    p_tier TEXT,
+    p_limit INTEGER
+  ) RETURNS TABLE(allowed BOOLEAN, remaining INTEGER) AS $$
+  DECLARE
+    v_count INTEGER;
+  BEGIN
+    -- Lock the row for update
+    SELECT usage_count INTO v_count
+    FROM users
+    WHERE id = p_user_id
+    FOR UPDATE;
+    
+    -- Check limit
+    IF p_limit = -1 OR v_count < p_limit THEN
+      -- Increment
+      UPDATE users
+      SET usage_count = usage_count + 1
+      WHERE id = p_user_id;
+      
+      RETURN QUERY SELECT true, p_limit - v_count - 1;
+    ELSE
+      RETURN QUERY SELECT false, 0;
+    END IF;
+  END;
+  $$ LANGUAGE plpgsql SECURITY DEFINER;
+  ```
 
 ## 📁 Project Structure
 

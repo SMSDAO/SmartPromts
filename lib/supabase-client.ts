@@ -7,9 +7,15 @@ export function createClient() {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!url || !key) {
-    // Return a mock client for build time
-    console.warn('Supabase env vars not configured')
-    return null as any
+    // During build time, return a mock for SSG
+    if (typeof window === 'undefined') {
+      console.warn('Supabase env vars not configured at build time')
+      return null as any
+    }
+    // At runtime in browser, throw error
+    const message = 'Supabase env vars not configured'
+    console.error(message)
+    throw new Error(message)
   }
 
   return createBrowserClient(url, key)

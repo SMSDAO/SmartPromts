@@ -40,13 +40,17 @@ export async function checkUsageLimit(
   if (now > resetAt) {
     const newResetAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) // 30 days
     
-    await supabase
+    const { error } = await supabase
       .from('users')
       .update({
         usage_count: 0,
         usage_reset_at: newResetAt.toISOString(),
       })
       .eq('id', userId)
+
+    if (error) {
+      throw new Error(`Failed to reset usage: ${error.message}`)
+    }
 
     return {
       allowed: true,
@@ -72,7 +76,11 @@ export async function checkUsageLimit(
 export async function incrementUsage(userId: string): Promise<void> {
   const supabase = await createServerSupabaseClient()
 
-  await supabase.rpc('increment_usage', { user_id: userId })
+  const { error } = await supabase.rpc('increment_usage', { user_id: userId })
+  
+  if (error) {
+    throw new Error(`Failed to increment usage: ${error.message || String(error)}`)
+  }
 }
 
 // Get usage stats

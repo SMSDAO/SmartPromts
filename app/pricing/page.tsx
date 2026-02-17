@@ -56,10 +56,18 @@ const tiers = [
 
 export default function PricingPage() {
   const [loading, setLoading] = useState<string | null>(null)
+  
+  // Check if Stripe is configured
+  const isStripeConfigured = STRIPE_PRICE_IDS.pro && STRIPE_PRICE_IDS.enterprise
 
   const handleSubscribe = async (priceId: string, tier: string) => {
     if (tier === 'free') {
       window.location.href = '/login'
+      return
+    }
+
+    if (!isStripeConfigured || !priceId) {
+      alert('Stripe billing is not configured. Please contact support.')
       return
     }
 
@@ -108,6 +116,14 @@ export default function PricingPage() {
       </header>
 
       <main className="container mx-auto px-4 py-20">
+        {!isStripeConfigured && (
+          <div className="max-w-4xl mx-auto mb-8 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+            <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+              ⚠️ Stripe billing is not fully configured. Subscription features may not be available.
+            </p>
+          </div>
+        )}
+        
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
             Simple, Transparent Pricing

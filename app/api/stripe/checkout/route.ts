@@ -45,10 +45,19 @@ export async function POST(req: NextRequest) {
 
       // Update user with customer ID
       const supabase = createAdminClient()
-      await supabase
+      const { error: updateError } = await supabase
         .from('users')
         .update({ stripe_customer_id: customerId })
         .eq('id', user.id)
+
+      if (updateError) {
+        console.error('Failed to persist Stripe customer ID to database', {
+          userId: user.id,
+          customerId,
+          error: updateError,
+        })
+        throw new Error('Failed to update user with Stripe customer ID')
+      }
     }
 
     // Create checkout session

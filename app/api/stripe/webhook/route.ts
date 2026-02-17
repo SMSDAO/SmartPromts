@@ -49,7 +49,10 @@ export async function POST(req: NextRequest) {
 
         if (!userId) {
           console.error('No userId in session metadata')
-          break
+          return NextResponse.json(
+            { error: 'Missing userId in metadata' },
+            { status: 400 }
+          )
         }
 
         // Get subscription details
@@ -59,7 +62,7 @@ export async function POST(req: NextRequest) {
         const tier = getTierFromPriceId(priceId)
 
         // Update user subscription
-        await supabase
+        const { error } = await supabase
           .from('users')
           .update({
             subscription_tier: tier,
@@ -67,6 +70,14 @@ export async function POST(req: NextRequest) {
             stripe_customer_id: session.customer as string,
           })
           .eq('id', userId)
+
+        if (error) {
+          console.error('Failed to update user subscription:', error)
+          return NextResponse.json(
+            { error: 'Failed to update subscription' },
+            { status: 500 }
+          )
+        }
 
         console.log(`Subscription created for user ${userId}: ${tier}`)
         break
@@ -77,27 +88,38 @@ export async function POST(req: NextRequest) {
         const customerId = subscription.customer as string
 
         // Find user by customer ID
-        const { data: user } = await supabase
+        const { data: user, error: fetchError } = await supabase
           .from('users')
           .select('id')
           .eq('stripe_customer_id', customerId)
           .single()
 
-        if (!user) {
-          console.error('User not found for customer:', customerId)
-          break
+        if (fetchError || !user) {
+          console.error('User not found for customer:', customerId, fetchError)
+          return NextResponse.json(
+            { error: 'User not found' },
+            { status: 404 }
+          )
         }
 
         const priceId = subscription.items.data[0].price.id
         const tier = getTierFromPriceId(priceId)
 
-        await supabase
+        const { error: updateError } = await supabase
           .from('users')
           .update({
             subscription_tier: tier,
             stripe_subscription_id: subscription.id,
           })
           .eq('id', user.id)
+
+        if (updateError) {
+          console.error('Failed to update user subscription:', updateError)
+          return NextResponse.json(
+            { error: 'Failed to update subscription' },
+            { status: 500 }
+          )
+        }
 
         console.log(`Subscription updated for user ${user.id}: ${tier}`)
         break
@@ -108,25 +130,36 @@ export async function POST(req: NextRequest) {
         const customerId = subscription.customer as string
 
         // Find user by customer ID
-        const { data: user } = await supabase
+        const { data: user, error: fetchError } = await supabase
           .from('users')
           .select('id')
           .eq('stripe_customer_id', customerId)
           .single()
 
-        if (!user) {
-          console.error('User not found for customer:', customerId)
-          break
+        if (fetchError || !user) {
+          console.error('User not found for customer:', customerId, fetchError)
+          return NextResponse.json(
+            { error: 'User not found' },
+            { status: 404 }
+          )
         }
 
         // Downgrade to free tier
-        await supabase
+        const { error: updateError } = await supabase
           .from('users')
           .update({
             subscription_tier: 'free',
             stripe_subscription_id: null,
           })
           .eq('id', user.id)
+
+        if (updateError) {
+          console.error('Failed to downgrade user to free tier:', updateError)
+          return NextResponse.json(
+            { error: 'Failed to cancel subscription' },
+            { status: 500 }
+          )
+        }
 
         console.log(`Subscription cancelled for user ${user.id}`)
         break

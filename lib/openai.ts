@@ -65,9 +65,12 @@ Provide your response as a JSON object with:
       improvements: result.improvements || [],
       tokensEstimate: result.tokensEstimate || 0,
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('OpenAI API error:', error)
-    throw new Error('Failed to optimize prompt')
+    if (error instanceof Error) {
+      throw new Error(`Failed to optimize prompt: ${error.message}`)
+    }
+    throw new Error(`Failed to optimize prompt: ${String(error)}`)
   }
 }
 
