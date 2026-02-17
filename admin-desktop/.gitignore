@@ -1,0 +1,8 @@
+# Dependencies
+node_modules/
+
+# Tauri build outputs
+src-tauri/target/
+
+# Logs
+*.log

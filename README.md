@@ -93,11 +93,12 @@ Run this SQL in your Supabase SQL Editor to create the required tables and funct
 CREATE TABLE users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL,
-  subscription_tier TEXT NOT NULL DEFAULT 'free' CHECK (subscription_tier IN ('free', 'pro', 'enterprise')),
+  subscription_tier TEXT NOT NULL DEFAULT 'free' CHECK (subscription_tier IN ('free', 'pro', 'enterprise', 'lifetime', 'admin')),
   stripe_customer_id TEXT,
   stripe_subscription_id TEXT,
   usage_count INTEGER NOT NULL DEFAULT 0,
   usage_reset_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() + INTERVAL '30 days'),
+  banned BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
@@ -127,7 +128,7 @@ CREATE POLICY "Users can read own data"
   USING (auth.uid() = id);
 
 -- Users can only update their own non-billing fields
--- Billing-related fields (subscription_tier, usage_count, Stripe IDs, usage_reset_at)
+-- Billing-related fields (subscription_tier, usage_count, Stripe IDs, usage_reset_at, banned)
 -- can only be updated by service role (server-side code)
 CREATE POLICY "Users can update own profile only"
   ON users FOR UPDATE
@@ -138,6 +139,7 @@ CREATE POLICY "Users can update own profile only"
     AND subscription_tier = (SELECT subscription_tier FROM users WHERE id = auth.uid())
     AND usage_count = (SELECT usage_count FROM users WHERE id = auth.uid())
     AND usage_reset_at = (SELECT usage_reset_at FROM users WHERE id = auth.uid())
+    AND banned = (SELECT banned FROM users WHERE id = auth.uid())
     AND stripe_customer_id IS NOT DISTINCT FROM (SELECT stripe_customer_id FROM users WHERE id = auth.uid())
     AND stripe_subscription_id IS NOT DISTINCT FROM (SELECT stripe_subscription_id FROM users WHERE id = auth.uid())
   );
@@ -256,13 +258,25 @@ SmartPromts/
 
 ## 📊 Subscription Tiers
 
-| Feature | Free | Pro | Enterprise |
-|---------|------|-----|------------|
-| Optimizations/month | 10 | 1,000 | Unlimited |
-| All AI Models | ✅ | ✅ | ✅ |
-| Priority Support | ❌ | ✅ | ✅ |
-| API Access | ❌ | ❌ | ✅ |
-| Team Management | ❌ | ❌ | ✅ |
+| Feature | Free | Pro | Lifetime | Enterprise |
+|---------|------|-----|----------|------------|
+| Optimizations/month | 10 | 1,000 | Unlimited | Unlimited |
+| All AI Models | ✅ | ✅ | ✅ | ✅ |
+| Priority Support | ❌ | ✅ | ✅ | ✅ |
+| NFT Pass | ❌ | ❌ | ✅ | ✅ |
+| API Access | ❌ | ❌ | ✅ | ✅ |
+| Team Management | ❌ | ❌ | ❌ | ✅ |
+
+### Admin Features
+
+The admin panel (`/admin`) provides comprehensive user management:
+- View all users with their tiers, usage, and status
+- Update user subscription tiers (free/pro/lifetime/admin)
+- Reset usage counters
+- Ban/unban users
+- Real-time statistics dashboard
+
+Access is restricted to users with the `admin` tier.
 
 ## 🤝 Contributing
 
