@@ -69,7 +69,7 @@ export default function DashboardPage() {
       {usageInfo && (
         <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
           <p className="text-sm text-blue-900 dark:text-blue-200">
-            <strong>Usage:</strong> {usageInfo.remaining} of {usageInfo.limit === -1 ? '∞' : usageInfo.limit} remaining
+            <strong>Usage:</strong> {usageInfo.remaining} of {usageInfo.limit === -1 ? <span aria-label="unlimited">∞</span> : usageInfo.limit} remaining
             {usageInfo.limit !== -1 && ` (Resets: ${new Date(usageInfo.resetAt).toLocaleDateString()})`}
           </p>
         </div>

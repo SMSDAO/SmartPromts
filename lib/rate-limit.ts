@@ -1,5 +1,7 @@
 // Simple in-memory rate limiter
 // For production, consider using Redis or similar distributed cache
+// Note: The probabilistic cleanup (1% chance) is simple but not ideal for high-scale production.
+// For production deployments, use Redis with TTL or a scheduled cleanup job.
 
 interface RateLimitStore {
   [key: string]: {

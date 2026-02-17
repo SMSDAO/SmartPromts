@@ -2,8 +2,7 @@
 
 AI Smart Prompts Optimized for any Agent, Any Model - with advanced caching, dynamic balancing, and enterprise-grade features.
 
-![SmartPromts Dashboard](./docs/dashboard-screenshot.png)
-*Modern landing page and dashboard with day/night mode support*
+> **Note**: Screenshots of the application are available in the pull request description. To add your own dashboard screenshot, place it at `./docs/dashboard-screenshot.png`.
 
 ## 🚀 Features
 
