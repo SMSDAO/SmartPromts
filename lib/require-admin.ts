@@ -31,7 +31,23 @@ export async function requireAdmin(): Promise<AdminUser | NextResponse> {
     .eq('id', session.user.id)
     .single()
 
-  if (error || !user) {
+  // Distinguish "no row found" from other errors
+  if (error) {
+    // Supabase/PostgREST uses PGRST116 for "Results contain 0 rows" with .single()
+    if ((error as any).code === 'PGRST116') {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+
+  if (!user) {
     return NextResponse.json(
       { error: 'User not found' },
       { status: 404 }
