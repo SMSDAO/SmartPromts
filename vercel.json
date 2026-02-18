@@ -12,7 +12,7 @@
       "runtime": "nodejs20.x"
     }
   },
-  "_comment": "Environment variables use Vercel secret references (@secret-name). Create these secrets in your Vercel project settings before deployment. Each @ reference must match a secret name in your Vercel project.",
+  "_comment": "⚠️ IMPORTANT: Environment variables use Vercel secret references (@secret-name). These are NOT regular env vars. You MUST create these secrets in your Vercel project settings (Settings > Environment Variables > Sensitive) BEFORE deploying. Each @ reference must exactly match a secret name in your Vercel project. Without proper secrets configuration, deployment will fail or features will be broken at runtime.",
   "env": {
     "NEXT_PUBLIC_SUPABASE_URL": "@supabase-url",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase-anon-key",

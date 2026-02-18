@@ -181,6 +181,7 @@ export default function AdminActions({
               key={tier}
               onClick={() => handleUpdateTier(tier)}
               disabled={loading || currentTier === tier}
+              aria-label={`Update tier to ${tier}`}
               className={`px-3 py-1 text-sm rounded-md border transition-colors ${
                 currentTier === tier
                   ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed'
@@ -198,6 +199,7 @@ export default function AdminActions({
         <button
           onClick={handleResetUsage}
           disabled={loading}
+          aria-label="Reset user usage count to zero"
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           Reset Usage
@@ -207,6 +209,7 @@ export default function AdminActions({
           <button
             onClick={handleUnban}
             disabled={loading}
+            aria-label="Unban this user account"
             className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Unban User
@@ -215,6 +218,7 @@ export default function AdminActions({
           <button
             onClick={handleBan}
             disabled={loading}
+            aria-label="Ban this user account"
             className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Ban User

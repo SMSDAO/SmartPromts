@@ -84,8 +84,13 @@ export async function POST(req: NextRequest) {
       context: validatedData.context,
     })
 
-    // Increment usage count
-    await incrementUsage(userId)
+    // Increment usage count (log error but continue if it fails to avoid blocking user)
+    try {
+      await incrementUsage(userId)
+    } catch (usageError) {
+      console.error('Failed to increment usage (non-blocking):', usageError)
+      // Continue - usage tracking failure shouldn't block the optimization result
+    }
 
     // Return result with usage info
     return NextResponse.json({

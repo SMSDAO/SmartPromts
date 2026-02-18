@@ -43,11 +43,7 @@ export default function DashboardPage() {
     },
     onSuccess: (data) => {
       setResult(data.data)
-      const usage: UsageInfo = { ...data.usage }
-      if (typeof usage.remaining === 'number' && usage.remaining < 0) {
-        usage.remaining = -1
-      }
-      setUsageInfo(usage)
+      setUsageInfo(data.usage)
     },
   })
 

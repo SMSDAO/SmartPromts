@@ -25,7 +25,6 @@ struct AppState {
 async fn save_auth_session(
     session: AuthSession,
     state: State<'_, AppState>,
-    app: tauri::AppHandle,
 ) -> Result<(), String> {
     let mut store_lock = state.store.lock().map_err(|e| e.to_string())?;
     

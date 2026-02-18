@@ -19,6 +19,14 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const validatedData = UpdateTierSchema.parse(body)
 
+    // Prevent admins from demoting themselves
+    if (adminUser.id === validatedData.userId && validatedData.tier !== 'admin') {
+      return NextResponse.json(
+        { error: 'Cannot change your own admin status. Have another admin modify your tier.' },
+        { status: 403 }
+      )
+    }
+
     // Use admin client to update user tier
     const supabaseAdmin = getAdminClient()
     const { data, error } = await supabaseAdmin

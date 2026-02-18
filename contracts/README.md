@@ -142,6 +142,33 @@ This contract:
 - Updated ownerMint to also mark addresses as having minted
 - Compatible with OpenZeppelin Contracts v5.x
 
+### Backend Integration (Future Work)
+
+**NFT Ownership Verification**: The contract provides a `hasLifetimePass(address)` view function to check NFT ownership. To fully integrate with the platform, implement:
+
+1. **API Endpoint**: Create `/api/verify-nft` to call `hasLifetimePass()` via ethers.js or viem
+2. **Automatic Tier Upgrade**: On NFT mint, emit event and listen for it to upgrade user to 'lifetime' tier
+3. **Periodic Verification**: Cron job or webhook to verify continued ownership (in case of transfers)
+4. **Wallet Connection**: Allow users to connect wallet and verify ownership on-demand
+
+Example implementation:
+```typescript
+// lib/nft.ts
+import { ethers } from 'ethers'
+
+export async function verifyLifetimePass(walletAddress: string): Promise<boolean> {
+  const provider = new ethers.JsonRpcProvider(process.env.BASE_RPC_URL)
+  const contract = new ethers.Contract(
+    process.env.NFT_CONTRACT_ADDRESS!,
+    ['function hasLifetimePass(address) view returns (bool)'],
+    provider
+  )
+  return await contract.hasLifetimePass(walletAddress)
+}
+```
+
+Currently, the 'lifetime' tier can be manually assigned by admins via the admin panel.
+
 ### Metadata
 
 NFT metadata should follow this structure:

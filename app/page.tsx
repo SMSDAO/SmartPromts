@@ -82,11 +82,11 @@ export default function HomePage() {
           <div className="mt-12 flex items-center justify-center space-x-8 text-gray-400">
             <div className="flex items-center">
               <Users className="h-5 w-5 mr-2 text-cyan-400" />
-              <span>10K+ Users</span>
+              <span>Built for teams of all sizes</span>
             </div>
             <div className="flex items-center">
               <Award className="h-5 w-5 mr-2 text-cyan-400" />
-              <span>99.9% Uptime</span>
+              <span>Enterprise-grade infrastructure</span>
             </div>
           </div>
         </div>
