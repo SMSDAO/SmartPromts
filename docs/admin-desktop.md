@@ -26,6 +26,22 @@ cd admin-desktop
 npm install
 ```
 
+4. **Important**: Prepare icons
+The Tauri configuration requires icon files. Create placeholder icons or generate proper app icons:
+```bash
+cd admin-desktop/src-tauri
+mkdir -p icons
+# Add your icon files: 32x32.png, 128x128.png, 128x128@2x.png, icon.icns, icon.ico, icon.png
+```
+
+You can use tools like [Tauri Icon Generator](https://github.com/tauri-apps/tao/tree/dev/examples/icon) or online services to generate all required formats from a single source image.
+
+5. **Note on Build Configuration**
+The current Tauri config points to `../out` for static builds. For development with Next.js API routes:
+- Use `npm run tauri dev` which loads from the dev server
+- For production builds, you may need to adjust the configuration to load from a hosted URL
+- Static export is not compatible with Next.js API routes used by the admin panel
+
 ## Development
 
 Run the desktop app in development mode:
@@ -98,9 +114,15 @@ The Tauri app uses the same navigation as the web admin:
 - Logout
 
 ### Authentication
-Authentication persists between sessions using:
-- Supabase client cookies
-- Tauri secure storage for tokens
+The desktop app uses cookie-based authentication from Supabase:
+- Sessions persist in the webview using HTTP cookies
+- Standard Supabase client authentication flow
+- No separate token storage implementation
+
+**Note**: For production desktop apps with enhanced security requirements, consider implementing:
+- Tauri secure storage for auth tokens
+- Custom session management
+- Automatic session refresh logic
 
 ## Troubleshooting
 

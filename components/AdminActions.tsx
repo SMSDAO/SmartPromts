@@ -176,7 +176,7 @@ export default function AdminActions({
       <div className="space-y-2">
         <label className="block text-sm font-medium">Update Tier</label>
         <div className="flex flex-wrap gap-2">
-          {['free', 'pro', 'lifetime', 'admin'].map((tier) => (
+          {['free', 'pro', 'enterprise', 'lifetime', 'admin'].map((tier) => (
             <button
               key={tier}
               onClick={() => handleUpdateTier(tier)}

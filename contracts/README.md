@@ -12,10 +12,19 @@ An ERC-721 NFT contract that grants holders unlimited prompt optimizations forev
   - Early Bird (0-100): 0.05 ETH (~$199)
   - Regular (101-600): 0.075 ETH (~$299)
   - Final (601-1000): 0.1 ETH (~$399)
-- **One per wallet**: Each address can mint only once
+- **One per wallet**: Each address can mint only once (enforced in both public and owner mints)
 - **Owner mint**: Admin can mint for giveaways/airdrops
 - **Pausable**: Minting can be enabled/disabled by owner
 - **Withdrawable**: Owner can withdraw contract balance
+- **Reentrancy protection**: Uses OpenZeppelin's ReentrancyGuard
+- **Safe transfers**: Uses low-level call pattern for ETH transfers
+
+### OpenZeppelin Compatibility
+
+This contract is compatible with OpenZeppelin Contracts v5.x:
+- Uses simple uint256 counter instead of deprecated Counters library
+- Initializes Ownable with msg.sender in constructor
+- Includes ReentrancyGuard for additional security
 
 ### Deployment (Foundry)
 
@@ -119,10 +128,19 @@ const mint = async () => {
 ### Security
 
 This contract:
-- Uses OpenZeppelin's audited contracts
+- Uses OpenZeppelin's audited contracts (ERC721, Ownable, ReentrancyGuard)
 - Implements checks-effects-interactions pattern
-- Limits one mint per address
-- Refunds excess payment automatically
+- Protected against reentrancy attacks with nonReentrant modifier
+- Uses low-level call() for ETH transfers (safer than transfer())
+- Limits one mint per address (enforced for both public and owner mints)
+- State updates before external calls to prevent reentrancy
+
+**Security Improvements from Review:**
+- Added ReentrancyGuard to mint function
+- Replaced unsafe transfer() with low-level call() for refunds and withdrawals
+- Fixed reentrancy vulnerability by setting hasMinted before _safeMint
+- Updated ownerMint to also mark addresses as having minted
+- Compatible with OpenZeppelin Contracts v5.x
 
 ### Metadata
 

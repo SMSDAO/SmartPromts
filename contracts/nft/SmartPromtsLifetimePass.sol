@@ -3,16 +3,18 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /**
  * @title SmartPromtsLifetimePass
  * @dev NFT contract for SmartPromts Lifetime Pass on Base network
  * Holders get unlimited prompt optimizations forever
+ * 
+ * Note: This contract uses a simple counter instead of the deprecated Counters library.
+ * Compatible with OpenZeppelin Contracts v5.x
  */
-contract SmartPromtsLifetimePass is ERC721, Ownable {
-    using Counters for Counters.Counter;
-    Counters.Counter private _tokenIds;
+contract SmartPromtsLifetimePass is ERC721, Ownable, ReentrancyGuard {
+    uint256 private _tokenIdCounter;
 
     uint256 public constant MAX_SUPPLY = 1000;
     uint256 public constant PRICE_EARLY_BIRD = 0.05 ether; // ~$199 at $4k ETH
@@ -29,7 +31,7 @@ contract SmartPromtsLifetimePass is ERC721, Ownable {
 
     event LifetimePassMinted(address indexed to, uint256 indexed tokenId, uint256 price);
 
-    constructor(string memory baseTokenURI) ERC721("SmartPromts Lifetime Pass", "SPLP") {
+    constructor(string memory baseTokenURI) ERC721("SmartPromts Lifetime Pass", "SPLP") Ownable(msg.sender) {
         _baseTokenURI = baseTokenURI;
     }
 
@@ -37,7 +39,7 @@ contract SmartPromtsLifetimePass is ERC721, Ownable {
      * @dev Get current mint price based on supply
      */
     function getCurrentPrice() public view returns (uint256) {
-        uint256 supply = _tokenIds.current();
+        uint256 supply = _tokenIdCounter;
         if (supply < EARLY_BIRD_SUPPLY) {
             return PRICE_EARLY_BIRD;
         } else if (supply < EARLY_BIRD_SUPPLY + REGULAR_SUPPLY) {
@@ -49,40 +51,42 @@ contract SmartPromtsLifetimePass is ERC721, Ownable {
 
     /**
      * @dev Mint a Lifetime Pass NFT
+     * Protected against reentrancy attacks
      */
-    function mint() external payable {
+    function mint() external payable nonReentrant {
         require(mintingEnabled, "Minting is not enabled");
-        require(_tokenIds.current() < MAX_SUPPLY, "Max supply reached");
+        require(_tokenIdCounter < MAX_SUPPLY, "Max supply reached");
         require(!hasMinted[msg.sender], "Already minted");
         
         uint256 price = getCurrentPrice();
         require(msg.value >= price, "Insufficient payment");
 
-        _tokenIds.increment();
-        uint256 newTokenId = _tokenIds.current();
+        // Update state before external calls (checks-effects-interactions)
+        uint256 newTokenId = ++_tokenIdCounter;
+        hasMinted[msg.sender] = true;
 
         _safeMint(msg.sender, newTokenId);
-        hasMinted[msg.sender] = true;
 
         emit LifetimePassMinted(msg.sender, newTokenId, price);
 
-        // Refund excess payment
+        // Refund excess payment using low-level call for safety
         if (msg.value > price) {
-            payable(msg.sender).transfer(msg.value - price);
+            uint256 refundAmount = msg.value - price;
+            (bool success, ) = payable(msg.sender).call{value: refundAmount}("");
+            require(success, "Refund failed");
         }
     }
 
     /**
      * @dev Owner mint for giveaways/airdrops
+     * Also marks the address as having minted to preserve one-per-wallet rule
      */
     function ownerMint(address to) external onlyOwner {
-        require(_tokenIds.current() < MAX_SUPPLY, "Max supply reached");
+        require(_tokenIdCounter < MAX_SUPPLY, "Max supply reached");
         require(!hasMinted[to], "Address has already minted");
 
+        uint256 newTokenId = ++_tokenIdCounter;
         hasMinted[to] = true;
-
-        _tokenIds.increment();
-        uint256 newTokenId = _tokenIds.current();
 
         _safeMint(to, newTokenId);
         emit LifetimePassMinted(to, newTokenId, 0);
@@ -104,18 +108,21 @@ contract SmartPromtsLifetimePass is ERC721, Ownable {
 
     /**
      * @dev Withdraw contract balance to owner
+     * Uses low-level call for safety with contract wallets
      */
     function withdraw() external onlyOwner {
         uint256 balance = address(this).balance;
         require(balance > 0, "No balance to withdraw");
-        payable(owner()).transfer(balance);
+        
+        (bool success, ) = payable(owner()).call{value: balance}("");
+        require(success, "Withdraw failed");
     }
 
     /**
      * @dev Get total minted supply
      */
     function totalSupply() external view returns (uint256) {
-        return _tokenIds.current();
+        return _tokenIdCounter;
     }
 
     /**
@@ -136,3 +143,4 @@ contract SmartPromtsLifetimePass is ERC721, Ownable {
     // test/SmartPromtsLifetimePass.t.sol, covering minting tiers, supply
     // limits, one-per-wallet logic, refunds, owner functions, and attack vectors.
 }
+

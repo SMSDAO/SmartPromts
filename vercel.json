@@ -8,9 +8,11 @@
   "functions": {
     "app/api/**/*.ts": {
       "memory": 1024,
-      "maxDuration": 10
+      "maxDuration": 10,
+      "runtime": "nodejs20.x"
     }
   },
+  "_comment": "Environment variables use Vercel secret references (@secret-name). Create these secrets in your Vercel project settings before deployment. Each @ reference must match a secret name in your Vercel project.",
   "env": {
     "NEXT_PUBLIC_SUPABASE_URL": "@supabase-url",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase-anon-key",

@@ -69,8 +69,8 @@ The Lifetime Pass NFT offers:
 1. **Limited Supply**: Cap at 1,000 NFTs to create scarcity
 2. **Tiered Pricing**:
    - Early Bird (First 100): $199
-   - Regular Price (Next 400): $299
-   - Final Tier (Remaining 500): $399
+   - Regular Price (Next 500): $299
+   - Final Tier (Last 400): $399
 
 3. **Utility Expansion**:
    - Holder-only Discord channels

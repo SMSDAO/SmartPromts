@@ -92,9 +92,10 @@ export async function POST(req: NextRequest) {
       success: true,
       data: result,
       usage: {
-        remaining: usageCheck.remaining - 1,
+        remaining: usageCheck.limit === -1 ? -1 : usageCheck.remaining - 1,
         limit: usageCheck.limit,
         resetAt: usageCheck.resetAt,
+        tier: user.subscription_tier,
       },
     })
   } catch (error) {

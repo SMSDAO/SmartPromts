@@ -1,18 +1,35 @@
 import { redirect } from 'next/navigation'
-import { requireAdmin, getAdminClient } from '@/lib/supabase'
+import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase'
 import AdminUserRow from './AdminUserRow'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminPage() {
-  // Ensure the current user is an admin using shared auth logic
-  await requireAdmin()
+  // Check authentication and admin access
+  const supabase = await createServerSupabaseClient()
+  const { data: { session } } = await supabase.auth.getSession()
 
-  // Fetch all users using admin client with restricted columns
-  const supabaseAdmin = getAdminClient()
+  if (!session) {
+    redirect('/login?redirect=/admin')
+  }
+
+  // Fetch current user to check admin status
+  const { data: currentUser } = await supabase
+    .from('users')
+    .select('subscription_tier')
+    .eq('id', session.user.id)
+    .single()
+
+  if (!currentUser || currentUser.subscription_tier !== 'admin') {
+    redirect('/dashboard')
+  }
+
+  // Fetch all users using admin client
+  const supabaseAdmin = createAdminClient()
   const { data: users, error } = await supabaseAdmin
     .from('users')
-    .select('id, email, subscription_tier, usage_count, banned, created_at')
+    .select('*')
+    .order('created_at', { ascending: false })
     .order('created_at', { ascending: false })
 
   if (error) {

@@ -48,14 +48,18 @@ REQUIRED_VARS=(
   "SUPABASE_SERVICE_ROLE_KEY"
 )
 
-source .env.local 2>/dev/null || true
-
+# Safely read env vars without executing arbitrary code
 MISSING_VARS=()
-for var in "${REQUIRED_VARS[@]}"; do
-  if [ -z "${!var}" ] || [[ "${!var}" == *"your_"* ]]; then
-    MISSING_VARS+=("$var")
-  fi
-done
+if [ -f .env.local ]; then
+  for var in "${REQUIRED_VARS[@]}"; do
+    value=$(grep "^${var}=" .env.local 2>/dev/null | cut -d '=' -f2- | tr -d '"' | tr -d "'")
+    if [ -z "$value" ] || [[ "$value" == *"your_"* ]]; then
+      MISSING_VARS+=("$var")
+    fi
+  done
+else
+  MISSING_VARS=("${REQUIRED_VARS[@]}")
+fi
 
 if [ ${#MISSING_VARS[@]} -ne 0 ]; then
   echo "⚠️  Warning: The following required variables need to be configured:"
