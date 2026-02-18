@@ -43,7 +43,11 @@ export default function DashboardPage() {
     },
     onSuccess: (data) => {
       setResult(data.data)
-      setUsageInfo({ ...data.usage, tier: data.usage.tier || 'free' })
+      const usage: UsageInfo = { ...data.usage }
+      if (typeof usage.remaining === 'number' && usage.remaining < 0) {
+        usage.remaining = -1
+      }
+      setUsageInfo(usage)
     },
   })
 
