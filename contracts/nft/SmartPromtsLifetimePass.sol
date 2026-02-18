@@ -77,12 +77,14 @@ contract SmartPromtsLifetimePass is ERC721, Ownable {
      */
     function ownerMint(address to) external onlyOwner {
         require(_tokenIds.current() < MAX_SUPPLY, "Max supply reached");
-        
+        require(!hasMinted[to], "Address has already minted");
+
+        hasMinted[to] = true;
+
         _tokenIds.increment();
         uint256 newTokenId = _tokenIds.current();
-        
+
         _safeMint(to, newTokenId);
-        
         emit LifetimePassMinted(to, newTokenId, 0);
     }
 
