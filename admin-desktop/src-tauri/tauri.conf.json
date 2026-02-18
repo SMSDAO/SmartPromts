@@ -1,7 +1,7 @@
 {
   "build": {
     "beforeDevCommand": "cd .. && npm run dev",
-    "beforeBuildCommand": "cd .. && npm run build",
+    "beforeBuildCommand": "cd .. && npm run build && npx next export",
     "devPath": "http://localhost:3000/admin",
     "distDir": "../out",
     "withGlobalTauri": false
