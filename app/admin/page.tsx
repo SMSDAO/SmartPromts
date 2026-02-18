@@ -30,7 +30,6 @@ export default async function AdminPage() {
     .from('users')
     .select('*')
     .order('created_at', { ascending: false })
-    .order('created_at', { ascending: false })
 
   if (error) {
     console.error('Error fetching users:', error)
