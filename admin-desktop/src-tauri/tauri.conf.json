@@ -3,7 +3,7 @@
     "beforeDevCommand": "cd .. && npm run dev",
     "beforeBuildCommand": "cd .. && npm run build && npx next export",
     "devPath": "http://localhost:3000/admin",
-    "distDir": "../out",
+    "distDir": "../.next",
     "withGlobalTauri": false
   },
   "package": {
