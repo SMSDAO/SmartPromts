@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Sparkles, Loader2, AlertCircle, ArrowRight, Crown } from 'lucide-react'
 import Link from 'next/link'
