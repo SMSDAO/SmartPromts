@@ -1,6 +1,5 @@
-﻿# Copilot Dynamic Instructions (Universal v6)
+# Copilot Dynamic Instructions (Universal v6)
 
-- Use .env.example as baseline
 - Never break builds due to missing env
 - Auto-inject fallback values during CI
 - Non-destructive changes only
