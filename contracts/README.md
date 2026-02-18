@@ -121,7 +121,6 @@ const mint = async () => {
 This contract:
 - Uses OpenZeppelin's audited contracts
 - Implements checks-effects-interactions pattern
-- Has reentrancy protection via OpenZeppelin
 - Limits one mint per address
 - Refunds excess payment automatically
 
