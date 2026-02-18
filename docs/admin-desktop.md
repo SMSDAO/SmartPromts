@@ -114,15 +114,59 @@ The Tauri app uses the same navigation as the web admin:
 - Logout
 
 ### Authentication
-The desktop app uses cookie-based authentication from Supabase:
-- Sessions persist in the webview using HTTP cookies
-- Standard Supabase client authentication flow
-- No separate token storage implementation
 
-**Note**: For production desktop apps with enhanced security requirements, consider implementing:
-- Tauri secure storage for auth tokens
-- Custom session management
-- Automatic session refresh logic
+The desktop app implements secure token storage using Tauri's plugin-store:
+- **Secure Storage**: Auth tokens stored encrypted using Tauri's secure store
+- **Session Persistence**: Sessions persist across app restarts
+- **Automatic Restoration**: App restores valid sessions on startup
+- **Token Management**: Includes access token, refresh token, and expiration tracking
+
+#### Integration with Supabase
+
+The Tauri app intercepts Supabase authentication and stores tokens securely:
+
+1. **Login Flow**: When user logs in via Supabase, tokens are saved to secure storage
+2. **Session Restoration**: On app startup, valid tokens are restored automatically
+3. **Token Refresh**: Expired tokens trigger re-authentication
+4. **Logout**: Clears tokens from secure storage
+
+#### Usage Example
+
+```typescript
+import { saveAuthSession, getAuthSession, clearAuthSession, restoreSession } from './src/tauri-auth'
+
+// After Supabase login
+const { session } = await supabase.auth.getSession()
+if (session) {
+  await saveAuthSession({
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+    expires_at: session.expires_at * 1000,
+    user_id: session.user.id
+  })
+}
+
+// On app startup
+const restoredSession = await restoreSession()
+if (restoredSession) {
+  // Set Supabase session
+  await supabase.auth.setSession({
+    access_token: restoredSession.access_token,
+    refresh_token: restoredSession.refresh_token
+  })
+}
+
+// On logout
+await supabase.auth.signOut()
+await clearAuthSession()
+```
+
+#### Security Features
+
+- **Encrypted Storage**: Tokens stored in encrypted format using OS keychain
+- **Per-User Isolation**: Each OS user has separate encrypted storage
+- **No Plain Text**: Tokens never stored in plain text or browser localStorage
+- **Automatic Cleanup**: Expired sessions automatically cleared
 
 ## Troubleshooting
 
