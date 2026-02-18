@@ -131,4 +131,8 @@ contract SmartPromtsLifetimePass is ERC721, Ownable {
     function hasLifetimePass(address account) external view returns (bool) {
         return balanceOf(account) > 0;
     }
+
+    // NOTE: Comprehensive Foundry tests for this contract are provided in
+    // test/SmartPromtsLifetimePass.t.sol, covering minting tiers, supply
+    // limits, one-per-wallet logic, refunds, owner functions, and attack vectors.
 }
