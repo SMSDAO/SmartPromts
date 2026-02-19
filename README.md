@@ -5,12 +5,16 @@ AI Smart Prompts Optimized for any Agent, Any Model - with advanced caching, dyn
 ## 📸 Screenshots
 
 ### Landing Page
-![Landing Page](https://github.com/user-attachments/assets/e657b33a-8079-4611-a3ba-350d5f75cc7e)
-*Modern landing page with feature showcase and call-to-action buttons*
+![Landing Page](https://github.com/user-attachments/assets/c7438e13-0ee0-4394-abef-224ba6dd7a64)
+*Premium crypto SaaS design with neo glow effects, Farcaster community mentions (@TradeOS, @SolanaRemix, @gxqstudio.eth), and NFT Lifetime Pass section*
 
 ### Pricing Page
-![Pricing Page](https://github.com/user-attachments/assets/5b726332-cacb-41e9-9c8d-c5dd55a9b2a9)
-*Transparent pricing with three tiers: Free, Pro, and Enterprise*
+![Pricing Page](https://github.com/user-attachments/assets/2651902c-2576-4532-b125-82477f3893c9)
+*Three subscription tiers (Free, Pro, Enterprise) plus NFT Lifetime Pass with tiered pricing (0.05-0.1 ETH) on Base network*
+
+### Admin Dashboard
+![Admin Dashboard](https://github.com/user-attachments/assets/9615e1a5-2469-4248-804f-c3fdc2626d6f)
+*Complete user management interface with tier controls (free/pro/enterprise/lifetime/admin), usage tracking with progress bars, and ban/unban actions*
 
 ## 🚀 Features
 
