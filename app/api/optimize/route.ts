@@ -31,6 +31,14 @@ export async function POST(req: NextRequest) {
     // Upsert user to ensure they exist in database
     const user = await upsertUser(userId, email)
 
+    // Check if user is banned
+    if (user.banned) {
+      return NextResponse.json(
+        { error: 'Account banned - Please contact support' },
+        { status: 403 }
+      )
+    }
+
     // Rate limiting - 10 requests per minute per user
     const rateLimitResult = rateLimit(`optimize:${userId}`, {
       interval: 60 * 1000,
@@ -76,17 +84,23 @@ export async function POST(req: NextRequest) {
       context: validatedData.context,
     })
 
-    // Increment usage count
-    await incrementUsage(userId)
+    // Increment usage count (log error but continue if it fails to avoid blocking user)
+    try {
+      await incrementUsage(userId)
+    } catch (usageError) {
+      console.error('Failed to increment usage (non-blocking):', usageError)
+      // Continue - usage tracking failure shouldn't block the optimization result
+    }
 
     // Return result with usage info
     return NextResponse.json({
       success: true,
       data: result,
       usage: {
-        remaining: usageCheck.remaining - 1,
+        remaining: usageCheck.limit === -1 ? -1 : usageCheck.remaining - 1,
         limit: usageCheck.limit,
         resetAt: usageCheck.resetAt,
+        tier: user.subscription_tier,
       },
     })
   } catch (error) {

@@ -1,7 +1,7 @@
 import { createServerSupabaseClient } from './supabase'
 import { NextResponse } from 'next/server'
 
-export type SubscriptionTier = 'free' | 'pro' | 'enterprise'
+export type SubscriptionTier = 'free' | 'pro' | 'enterprise' | 'lifetime' | 'admin'
 
 export interface User {
   id: string
@@ -11,6 +11,7 @@ export interface User {
   stripe_subscription_id: string | null
   usage_count: number
   usage_reset_at: string
+  banned: boolean
 }
 
 // Get current user from session
@@ -51,24 +52,36 @@ export async function upsertUser(userId: string, email: string): Promise<User> {
   const now = new Date().toISOString()
   const resetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days from now
 
+  // First check if user exists
+  const { data: existingUser } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .single()
+
+  if (existingUser) {
+    // User exists, just return it without overwriting billing fields
+    return existingUser
+  }
+
+  // User doesn't exist, create with defaults
   const { data, error } = await supabase
     .from('users')
-    .upsert({
+    .insert({
       id: userId,
       email,
       subscription_tier: 'free',
       usage_count: 0,
       usage_reset_at: resetAt,
+      banned: false,
+      created_at: now,
       updated_at: now,
-    }, {
-      onConflict: 'id',
-      ignoreDuplicates: false,
     })
     .select()
     .single()
 
   if (error) {
-    throw new Error(`Failed to upsert user: ${error.message}`)
+    throw new Error(`Failed to create user: ${error.message}`)
   }
 
   return data

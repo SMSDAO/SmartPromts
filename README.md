@@ -5,12 +5,16 @@ AI Smart Prompts Optimized for any Agent, Any Model - with advanced caching, dyn
 ## 📸 Screenshots
 
 ### Landing Page
-![Landing Page](https://github.com/user-attachments/assets/e657b33a-8079-4611-a3ba-350d5f75cc7e)
-*Modern landing page with feature showcase and call-to-action buttons*
+![Landing Page](https://github.com/user-attachments/assets/c7438e13-0ee0-4394-abef-224ba6dd7a64)
+*Premium crypto SaaS design with neo glow effects, Farcaster community mentions (@TradeOS, @SolanaRemix, @gxqstudio.eth), and NFT Lifetime Pass section*
 
 ### Pricing Page
-![Pricing Page](https://github.com/user-attachments/assets/5b726332-cacb-41e9-9c8d-c5dd55a9b2a9)
-*Transparent pricing with three tiers: Free, Pro, and Enterprise*
+![Pricing Page](https://github.com/user-attachments/assets/2651902c-2576-4532-b125-82477f3893c9)
+*Three subscription tiers (Free, Pro, Enterprise) plus NFT Lifetime Pass with tiered pricing (0.05-0.1 ETH) on Base network*
+
+### Admin Dashboard
+![Admin Dashboard](https://github.com/user-attachments/assets/9615e1a5-2469-4248-804f-c3fdc2626d6f)
+*Complete user management interface with tier controls (free/pro/enterprise/lifetime/admin), usage tracking with progress bars, and ban/unban actions*
 
 ## 🚀 Features
 
@@ -39,7 +43,8 @@ AI Smart Prompts Optimized for any Agent, Any Model - with advanced caching, dyn
 
 ### Prerequisites
 
-- Node.js 18+ and npm/yarn
+- **Node.js 20+** for frontend/web app (Node.js 24+ recommended for admin tooling)
+- npm 10+ or yarn
 - Supabase account (free tier works)
 - OpenAI API account
 - Stripe account (test mode for development)
@@ -93,11 +98,12 @@ Run this SQL in your Supabase SQL Editor to create the required tables and funct
 CREATE TABLE users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL,
-  subscription_tier TEXT NOT NULL DEFAULT 'free' CHECK (subscription_tier IN ('free', 'pro', 'enterprise')),
+  subscription_tier TEXT NOT NULL DEFAULT 'free' CHECK (subscription_tier IN ('free', 'pro', 'enterprise', 'lifetime', 'admin')),
   stripe_customer_id TEXT,
   stripe_subscription_id TEXT,
   usage_count INTEGER NOT NULL DEFAULT 0,
   usage_reset_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() + INTERVAL '30 days'),
+  banned BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
@@ -127,7 +133,7 @@ CREATE POLICY "Users can read own data"
   USING (auth.uid() = id);
 
 -- Users can only update their own non-billing fields
--- Billing-related fields (subscription_tier, usage_count, Stripe IDs, usage_reset_at)
+-- Billing-related fields (subscription_tier, usage_count, Stripe IDs, usage_reset_at, banned)
 -- can only be updated by service role (server-side code)
 CREATE POLICY "Users can update own profile only"
   ON users FOR UPDATE
@@ -138,6 +144,7 @@ CREATE POLICY "Users can update own profile only"
     AND subscription_tier = (SELECT subscription_tier FROM users WHERE id = auth.uid())
     AND usage_count = (SELECT usage_count FROM users WHERE id = auth.uid())
     AND usage_reset_at = (SELECT usage_reset_at FROM users WHERE id = auth.uid())
+    AND banned = (SELECT banned FROM users WHERE id = auth.uid())
     AND stripe_customer_id IS NOT DISTINCT FROM (SELECT stripe_customer_id FROM users WHERE id = auth.uid())
     AND stripe_subscription_id IS NOT DISTINCT FROM (SELECT stripe_subscription_id FROM users WHERE id = auth.uid())
   );
@@ -256,13 +263,25 @@ SmartPromts/
 
 ## 📊 Subscription Tiers
 
-| Feature | Free | Pro | Enterprise |
-|---------|------|-----|------------|
-| Optimizations/month | 10 | 1,000 | Unlimited |
-| All AI Models | ✅ | ✅ | ✅ |
-| Priority Support | ❌ | ✅ | ✅ |
-| API Access | ❌ | ❌ | ✅ |
-| Team Management | ❌ | ❌ | ✅ |
+| Feature | Free | Pro | Lifetime | Enterprise |
+|---------|------|-----|----------|------------|
+| Optimizations/month | 10 | 1,000 | Unlimited | Unlimited |
+| All AI Models | ✅ | ✅ | ✅ | ✅ |
+| Priority Support | ❌ | ✅ | ✅ | ✅ |
+| NFT Pass | ❌ | ❌ | ✅ | ✅ |
+| API Access | ❌ | ❌ | ✅ | ✅ |
+| Team Management | ❌ | ❌ | ❌ | ✅ |
+
+### Admin Features
+
+The admin panel (`/admin`) provides comprehensive user management:
+- View all users with their tiers, usage, and status
+- Update user subscription tiers (free/pro/lifetime/admin)
+- Reset usage counters
+- Ban/unban users
+- Real-time statistics dashboard
+
+Access is restricted to users with the `admin` tier.
 
 ## 🤝 Contributing
 

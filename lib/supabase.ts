@@ -59,33 +59,36 @@ export type Database = {
         Row: {
           id: string
           email: string
-          subscription_tier: 'free' | 'pro' | 'enterprise'
+          subscription_tier: 'free' | 'pro' | 'enterprise' | 'lifetime' | 'admin'
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           usage_count: number
           usage_reset_at: string
+          banned: boolean
           created_at: string
           updated_at: string
         }
         Insert: {
           id: string
           email: string
-          subscription_tier?: 'free' | 'pro' | 'enterprise'
+          subscription_tier?: 'free' | 'pro' | 'enterprise' | 'lifetime' | 'admin'
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           usage_count?: number
           usage_reset_at?: string
+          banned?: boolean
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           email?: string
-          subscription_tier?: 'free' | 'pro' | 'enterprise'
+          subscription_tier?: 'free' | 'pro' | 'enterprise' | 'lifetime' | 'admin'
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           usage_count?: number
           usage_reset_at?: string
+          banned?: boolean
           created_at?: string
           updated_at?: string
         }

@@ -6,6 +6,8 @@ const USAGE_LIMITS: Record<SubscriptionTier, number> = {
   free: 10,
   pro: 1000,
   enterprise: -1, // unlimited
+  lifetime: -1,   // unlimited
+  admin: -1,      // unlimited
 }
 
 export interface UsageCheckResult {
