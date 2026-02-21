@@ -10,6 +10,9 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
  * @dev NFT contract for SmartPromts Lifetime Pass on Base network
  * Holders get unlimited prompt optimizations forever
  * 
+ * Token IDs: Start from 1 (not 0). Uses pre-increment (++_tokenIdCounter).
+ * First minted token has ID 1, last has ID 1000.
+ * 
  * Note: This contract uses a simple counter instead of the deprecated Counters library.
  * Compatible with OpenZeppelin Contracts v5.x
  */
