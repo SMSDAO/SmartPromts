@@ -9,9 +9,10 @@ An ERC-721 NFT contract that grants holders unlimited prompt optimizations forev
 ### Features
 - **Limited Supply**: Maximum 1,000 NFTs
 - **Tiered Pricing**:
-  - Early Bird (0-100): 0.05 ETH (~$199)
-  - Regular (101-600): 0.075 ETH (~$299)
-  - Final (601-1000): 0.1 ETH (~$399)
+  - Early Bird (Token IDs 1-100): 0.05 ETH (~$199)
+  - Regular (Token IDs 101-600): 0.075 ETH (~$299)
+  - Final (Token IDs 601-1000): 0.1 ETH (~$399)
+  - _Note: Token IDs are 1-indexed. The internal token ID counter starts at 0, and the first minted token has ID 1._
 - **One per wallet**: Each address can mint only once (enforced in both public and owner mints)
 - **Owner mint**: Admin can mint for giveaways/airdrops
 - **Pausable**: Minting can be enabled/disabled by owner
