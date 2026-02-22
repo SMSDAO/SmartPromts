@@ -31,7 +31,7 @@ Copy the `tauri-auth.ts` helper into your Next.js app:
 
 ```typescript
 // lib/tauri-auth.ts or similar location
-import { saveAuthSession, getAuthSession, clearAuthSession, restoreSession } from '@/admin-desktop/src/tauri-auth'
+import { saveAuthSession, getAuthSession, clearAuthSession, restoreSession } from '@/lib/tauri-auth'
 ```
 
 ### 2. Update Login Component
