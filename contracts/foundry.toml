@@ -1,0 +1,16 @@
+[profile.default]
+src = "nft"
+out = "out"
+libs = ["lib"]
+solc = "0.8.20"
+
+# RPC endpoints rely on environment variables.
+# Ensure BASE_RPC_URL is set in your shell (or .env) to a valid Base network RPC URL.
+[rpc_endpoints]
+base = "${BASE_RPC_URL}"
+base_sepolia = "https://sepolia.base.org"
+
+# Etherscan (Basescan) configuration requires an API key.
+# Ensure BASESCAN_API_KEY is set in your shell (or .env) to your Basescan API key.
+[etherscan]
+base = { key = "${BASESCAN_API_KEY}", url = "https://api.basescan.org/api" }

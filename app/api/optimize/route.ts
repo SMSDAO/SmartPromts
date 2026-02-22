@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCurrentUser, upsertUser } from '@/lib/auth'
+import { upsertUser } from '@/lib/auth'
 import { checkUsageLimit, incrementUsage } from '@/lib/usage'
 import { rateLimit } from '@/lib/rate-limit'
 import { optimizePrompt } from '@/lib/openai'
@@ -30,6 +30,14 @@ export async function POST(req: NextRequest) {
 
     // Upsert user to ensure they exist in database
     const user = await upsertUser(userId, email)
+
+    // Check if user is banned
+    if (user.banned) {
+      return NextResponse.json(
+        { error: 'Account banned - Please contact support' },
+        { status: 403 }
+      )
+    }
 
     // Rate limiting - 10 requests per minute per user
     const rateLimitResult = rateLimit(`optimize:${userId}`, {
@@ -76,17 +84,27 @@ export async function POST(req: NextRequest) {
       context: validatedData.context,
     })
 
-    // Increment usage count
-    await incrementUsage(userId)
+    // Increment usage count and get updated remaining count
+    let actualRemaining = usageCheck.remaining - 1
+    try {
+      await incrementUsage(userId)
+      // Re-check usage to get actual remaining after increment
+      const updatedUsage = await checkUsageLimit(userId, user.subscription_tier)
+      actualRemaining = updatedUsage.remaining
+    } catch (usageError) {
+      console.error('Failed to increment usage (non-blocking):', usageError)
+      // Continue - usage tracking failure shouldn't block the optimization result
+    }
 
     // Return result with usage info
     return NextResponse.json({
       success: true,
       data: result,
       usage: {
-        remaining: usageCheck.remaining - 1,
+        remaining: usageCheck.limit === -1 ? -1 : actualRemaining,
         limit: usageCheck.limit,
         resetAt: usageCheck.resetAt,
+        tier: user.subscription_tier,
       },
     })
   } catch (error) {
