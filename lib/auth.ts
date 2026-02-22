@@ -29,6 +29,11 @@ export async function getCurrentUser(): Promise<User | null> {
     .eq('id', session.user.id)
     .single()
 
+  // If user row doesn't exist, create it automatically
+  if (!user && session.user.email) {
+    return await upsertUser(session.user.id, session.user.email)
+  }
+
   return user
 }
 
@@ -52,22 +57,10 @@ export async function upsertUser(userId: string, email: string): Promise<User> {
   const now = new Date().toISOString()
   const resetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days from now
 
-  // First check if user exists
-  const { data: existingUser } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', userId)
-    .single()
-
-  if (existingUser) {
-    // User exists, just return it without overwriting billing fields
-    return existingUser
-  }
-
-  // User doesn't exist, create with defaults
+  // Use atomic upsert with onConflict to handle race conditions
   const { data, error } = await supabase
     .from('users')
-    .insert({
+    .upsert({
       id: userId,
       email,
       subscription_tier: 'free',
@@ -76,12 +69,15 @@ export async function upsertUser(userId: string, email: string): Promise<User> {
       banned: false,
       created_at: now,
       updated_at: now,
+    }, {
+      onConflict: 'id',
+      ignoreDuplicates: false,
     })
     .select()
     .single()
 
   if (error) {
-    throw new Error(`Failed to create user: ${error.message}`)
+    throw new Error(`Failed to upsert user: ${error.message}`)
   }
 
   return data

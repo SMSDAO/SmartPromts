@@ -34,6 +34,13 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) {
+      // Handle user not found (PGRST116 error code)
+      if (error.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: 'User not found' },
+          { status: 404 }
+        )
+      }
       return NextResponse.json(
         { error: `Failed to reset usage: ${error.message}` },
         { status: 500 }

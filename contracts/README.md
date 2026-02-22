@@ -50,10 +50,10 @@ cp .env.example .env
 4. Deploy to Base:
 ```bash
 forge create --rpc-url $BASE_RPC_URL \
-  --private-key $DEPLOYER_PRIVATE_KEY \
+  --private-key $NFT_DEPLOYER_PRIVATE_KEY \
   --etherscan-api-key $BASESCAN_API_KEY \
   --verify \
-  contracts/nft/SmartPromtsLifetimePass.sol:SmartPromtsLifetimePass \
+  nft/SmartPromtsLifetimePass.sol:SmartPromtsLifetimePass \
   --constructor-args "ipfs://YOUR_METADATA_CID/"
 ```
 

@@ -4,7 +4,7 @@ This directory contains the Tauri-based desktop wrapper for the SmartPromts admi
 
 ## Prerequisites
 
-- **Node.js 24+**: Required for Tauri CLI and build tools
+- **Node.js 20+**: Required for Tauri CLI and build tools (Node 20-25 supported)
 - **Rust**: Required for Tauri (install via [rustup](https://rustup.rs/))
 - **Windows Build Tools**: Visual Studio 2019+ with C++ tools
 
@@ -37,10 +37,10 @@ mkdir -p icons
 You can use tools like [Tauri Icon Generator](https://github.com/tauri-apps/tao/tree/dev/examples/icon) or online services to generate all required formats from a single source image.
 
 5. **Note on Build Configuration**
-The current Tauri config points to `../out` for static builds. For development with Next.js API routes:
+The current Tauri config points to `../.next` for Next.js builds. For development with Next.js API routes:
 - Use `npm run tauri dev` which loads from the dev server
 - For production builds, you may need to adjust the configuration to load from a hosted URL
-- Static export is not compatible with Next.js API routes used by the admin panel
+- The admin panel requires Next.js API routes which are available in both dev and production builds
 
 ## Development
 
