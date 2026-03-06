@@ -1,0 +1,95 @@
+{
+  "repository": {
+    "name": "SmartPromts",
+    "owner": "SMSDAO",
+    "description": "AI Smart Prompts optimised for any agent, any model — parallel caches, dynamic balancer",
+    "visibility": "public",
+    "primaryLanguage": "TypeScript",
+    "framework": "Next.js",
+    "frameworkVersion": "15.x",
+    "buildSystem": "npm",
+    "nodeVersion": ">=20.0.0",
+    "ciConfiguration": [
+      ".github/workflows/ci.yml",
+      ".github/workflows/build.yml",
+      ".github/workflows/lint.yml",
+      ".github/workflows/security.yml",
+      ".github/workflows/deploy.yml"
+    ],
+    "deploymentTargets": ["Vercel"],
+    "classification": "MIXED_PLATFORM",
+    "violations": [
+      "admin-desktop (Tauri) should be isolated to SMSDAO/SmartPromts-Admin repository"
+    ]
+  },
+  "architecture": {
+    "webApp": {
+      "type": "AI_ENGINE",
+      "path": "/",
+      "framework": "Next.js 15 (App Router)",
+      "description": "Main web application — prompt optimisation, user dashboard, admin panel",
+      "deployTarget": "Vercel"
+    },
+    "adminDesktop": {
+      "type": "DESKTOP_APP",
+      "path": "/admin-desktop",
+      "framework": "Tauri + Next.js",
+      "description": "Desktop admin wrapper — SHOULD BE MOVED to SMSDAO/SmartPromts-Admin",
+      "deployTarget": "Desktop binary (Tauri)"
+    },
+    "contracts": {
+      "type": "SMART_CONTRACT",
+      "path": "/contracts",
+      "framework": "Foundry (Solidity)",
+      "description": "NFT Lifetime Pass contract (Base network)"
+    }
+  },
+  "dependencies": {
+    "runtime": [
+      "@supabase/ssr",
+      "@supabase/supabase-js",
+      "@tanstack/react-query",
+      "clsx",
+      "lucide-react",
+      "next",
+      "openai",
+      "react",
+      "react-dom",
+      "stripe",
+      "zod"
+    ],
+    "development": [
+      "@types/node",
+      "@types/react",
+      "@types/react-dom",
+      "autoprefixer",
+      "eslint",
+      "eslint-config-next",
+      "postcss",
+      "tailwindcss",
+      "typescript"
+    ]
+  },
+  "integrations": {
+    "ai": "OpenAI GPT-4",
+    "database": "Supabase (PostgreSQL)",
+    "payments": "Stripe",
+    "auth": "Supabase Auth",
+    "blockchain": "Base (EVM) — NFT contract",
+    "social": "Farcaster (optional)"
+  },
+  "directories": {
+    "app": "Next.js App Router pages and API routes",
+    "components": "Shared React components",
+    "lib": "Utility libraries (auth, openai, stripe, supabase, rate-limit, usage)",
+    "src": "Additional source modules (AI services, etc.)",
+    "config": "Configuration modules (chains, constants)",
+    "docs": "Project documentation",
+    "scripts": "Build and automation scripts",
+    "contracts": "Solidity smart contracts (Foundry)",
+    "admin-desktop": "Tauri desktop wrapper — pending isolation",
+    "tests": "Unit and integration tests"
+  },
+  "generatedAt": "2026-03-06T21:27:40.000Z",
+  "auditVersion": "1.0.0"
+}
