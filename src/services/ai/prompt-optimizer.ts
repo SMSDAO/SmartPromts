@@ -1,6 +1,6 @@
 /**
  * Prompt Optimizer — enhanced wrapper around the OpenAI API with
- * model routing, validation, and result caching support.
+ * model routing and validation support.
  */
 
 import { routeModel } from './model-router'
