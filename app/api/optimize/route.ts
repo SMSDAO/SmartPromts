@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { upsertUser } from '@/lib/auth'
 import { checkUsageLimit, incrementUsage } from '@/lib/usage'
-import { rateLimit } from '@/lib/rate-limit'
+import { rateLimitAsync } from '@/lib/rate-limit'
 import { optimizePrompt } from '@/lib/openai'
 import { z } from 'zod'
 import { createServerSupabaseClient } from '@/lib/supabase'
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Rate limiting - 10 requests per minute per user
-    const rateLimitResult = rateLimit(`optimize:${userId}`, {
+    const rateLimitResult = await rateLimitAsync(`optimize:${userId}`, {
       interval: 60 * 1000,
       limit: 10,
     })
@@ -57,7 +57,12 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Check usage limit
+    // Parse and validate request body before checking usage to avoid
+    // charging users for malformed requests.
+    const body = await req.json()
+    const validatedData = OptimizeSchema.parse(body)
+
+    // Check usage limit (read-only — does not increment yet)
     const usageCheck = await checkUsageLimit(userId, user.subscription_tier)
 
     if (!usageCheck.allowed) {
@@ -73,10 +78,6 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Parse and validate request body
-    const body = await req.json()
-    const validatedData = OptimizeSchema.parse(body)
-
     // Optimize the prompt
     const result = await optimizePrompt({
       prompt: validatedData.prompt,
@@ -84,16 +85,17 @@ export async function POST(req: NextRequest) {
       context: validatedData.context,
     })
 
-    // Increment usage count and get updated remaining count
-    let actualRemaining = usageCheck.remaining - 1
+    // Increment usage only after a successful optimization so that failures
+    // (OpenAI errors, network issues) do not consume the user's quota.
+    let actualRemaining = usageCheck.remaining === -1 ? -1 : usageCheck.remaining - 1
     try {
       await incrementUsage(userId)
-      // Re-check usage to get actual remaining after increment
-      const updatedUsage = await checkUsageLimit(userId, user.subscription_tier)
-      actualRemaining = updatedUsage.remaining
+      // Re-read to get the accurate remaining count after increment
+      const updated = await checkUsageLimit(userId, user.subscription_tier)
+      actualRemaining = updated.remaining
     } catch (usageError) {
       console.error('Failed to increment usage (non-blocking):', usageError)
-      // Continue - usage tracking failure shouldn't block the optimization result
+      // Non-blocking: optimization result is returned even if tracking fails
     }
 
     // Return result with usage info

@@ -2,6 +2,8 @@
 
 AI Smart Prompts Optimized for any Agent, Any Model - with advanced caching, dynamic balancing, and enterprise-grade features.
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FSMSDAO%2FSmartPromts&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,OPENAI_API_KEY,STRIPE_SECRET_KEY,NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,STRIPE_WEBHOOK_SECRET,STRIPE_PRICE_ID_LIFETIME,NEXT_PUBLIC_APP_URL,NFT_CONTRACT_ADDRESS,BASE_RPC_URL,ADMIN_EMAIL,UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN,NEXT_PUBLIC_BASE_RPC_URL,NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID&project-name=smartpromts&repository-name=SmartPromts)
+
 ## 📸 Screenshots
 
 ### Landing Page
@@ -176,52 +178,25 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 🚀 Deployment (Vercel)
 
+### One-Click Deploy
+
+Click the button above or use this link to deploy instantly with all required environment variable prompts:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FSMSDAO%2FSmartPromts&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,OPENAI_API_KEY,STRIPE_SECRET_KEY,NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,STRIPE_WEBHOOK_SECRET,STRIPE_PRICE_ID_LIFETIME,NEXT_PUBLIC_APP_URL,NFT_CONTRACT_ADDRESS,BASE_RPC_URL,ADMIN_EMAIL,UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN,NEXT_PUBLIC_BASE_RPC_URL,NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID&project-name=smartpromts&repository-name=SmartPromts)
+
+### Manual Deploy
+
 1. Push your code to GitHub
 2. Import project in [Vercel](https://vercel.com)
-3. Add all environment variables from `.env.local`
+3. Add all environment variables from `.env.example`
 4. Deploy!
 5. Update Stripe webhook URL to your production domain
 
 ### ⚠️ Production Considerations
 
-**Rate Limiting**: The current in-memory rate limiter does not work in serverless/distributed environments. For production:
-- Use [Vercel KV](https://vercel.com/docs/storage/vercel-kv) (Redis)
-- Use [Upstash Redis](https://upstash.com/)
-- Or implement rate limiting in Supabase with a dedicated table
+**Rate Limiting**: Production deployments use [Upstash Redis](https://upstash.com/) for distributed rate limiting via `@upstash/ratelimit`. Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in your environment. Falls back to in-memory rate limiting for local development.
 
-**Usage Tracking Race Condition**: The usage check and increment are not atomic. For high-concurrency production:
-- Use PostgreSQL row-level locking with `FOR UPDATE`
-- Or implement the check/increment in a single Supabase RPC function
-- Example SQL function:
-  ```sql
-  CREATE OR REPLACE FUNCTION check_and_increment_usage(
-    p_user_id UUID,
-    p_tier TEXT,
-    p_limit INTEGER
-  ) RETURNS TABLE(allowed BOOLEAN, remaining INTEGER) AS $$
-  DECLARE
-    v_count INTEGER;
-  BEGIN
-    -- Lock the row for update
-    SELECT usage_count INTO v_count
-    FROM users
-    WHERE id = p_user_id
-    FOR UPDATE;
-    
-    -- Check limit
-    IF p_limit = -1 OR v_count < p_limit THEN
-      -- Increment
-      UPDATE users
-      SET usage_count = usage_count + 1
-      WHERE id = p_user_id;
-      
-      RETURN QUERY SELECT true, p_limit - v_count - 1;
-    ELSE
-      RETURN QUERY SELECT false, 0;
-    END IF;
-  END;
-  $$ LANGUAGE plpgsql SECURITY DEFINER;
-  ```
+**Usage Tracking Race Condition**: Resolved with atomic `check_and_increment_usage` PostgreSQL RPC function (see `scripts/setup-atomic-usage.sql`). Run this SQL script in your Supabase SQL editor before deploying to production.
 
 ## 📁 Project Structure
 

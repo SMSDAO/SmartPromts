@@ -24,7 +24,12 @@
     "STRIPE_PRICE_ID_LIFETIME": "@stripe-lifetime-price-id",
     "NEXT_PUBLIC_APP_URL": "@app-url",
     "NFT_CONTRACT_ADDRESS": "@nft-contract-address",
+    "NEXT_PUBLIC_NFT_CONTRACT_ADDRESS": "@nft-contract-address",
     "BASE_RPC_URL": "@base-rpc-url",
-    "ADMIN_EMAIL": "@admin-email"
+    "NEXT_PUBLIC_BASE_RPC_URL": "@next-public-base-rpc-url",
+    "ADMIN_EMAIL": "@admin-email",
+    "UPSTASH_REDIS_REST_URL": "@upstash-redis-rest-url",
+    "UPSTASH_REDIS_REST_TOKEN": "@upstash-redis-rest-token",
+    "NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID": "@walletconnect-project-id"
   }
 }
