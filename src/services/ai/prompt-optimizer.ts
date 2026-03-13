@@ -67,12 +67,22 @@ export async function optimizePrompt(
     response_format: { type: 'json_object' },
   })
 
-  const raw = JSON.parse(completion.choices[0].message.content ?? '{}') as {
+  const content = completion.choices?.[0]?.message?.content
+  let raw: {
     optimized?: string
     improvements?: string[]
     tokensEstimate?: number
   }
 
+  try {
+    raw = content ? (JSON.parse(content) as typeof raw) : {}
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : 'Unknown JSON parse error'
+    throw new Error(
+      `Failed to parse OpenAI prompt optimizer response as JSON: ${message}`
+    )
+  }
   return {
     original: prompt,
     optimized: raw.optimized ?? prompt,
