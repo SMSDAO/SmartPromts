@@ -122,10 +122,10 @@ create policy "Users can read own record" on public.users
   for select using (auth.uid() = id);
 
 create policy "Service role can do everything on users" on public.users
-  using (true) with check (true);
+  using (auth.role() = 'service_role') with check (auth.role() = 'service_role');
 
 create policy "Service role can do everything on usage" on public.usage
-  using (true) with check (true);
+  using (auth.role() = 'service_role') with check (auth.role() = 'service_role');
 ```
 
 ### 2. Enable Auth providers
