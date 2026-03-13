@@ -93,38 +93,36 @@ npx vercel --prod
 Run the following SQL in the Supabase SQL editor:
 
 ```sql
--- Users table
+-- Users table (usage tracking is stored directly on this table)
 create table if not exists public.users (
-  id uuid primary key references auth.users(id),
-  email text not null,
-  subscription_tier text not null default 'free',
-  banned boolean not null default false,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  id                     uuid        primary key references auth.users(id),
+  email                  text        not null,
+  subscription_tier      text        not null default 'free',
+  stripe_customer_id     text,
+  stripe_subscription_id text,
+  usage_count            integer     not null default 0,
+  usage_reset_at         timestamptz not null default (now() + interval '30 days'),
+  banned                 boolean     not null default false,
+  created_at             timestamptz not null default now(),
+  updated_at             timestamptz not null default now()
 );
 
--- Usage table
-create table if not exists public.usage (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.users(id) on delete cascade,
-  month text not null,
-  count integer not null default 0,
-  updated_at timestamptz not null default now(),
-  unique(user_id, month)
-);
+-- increment_usage RPC (called by lib/usage.ts)
+create or replace function increment_usage(user_id uuid)
+returns void language sql security definer as $$
+  update public.users
+  set usage_count = usage_count + 1, updated_at = now()
+  where id = user_id;
+$$;
 
 -- Row Level Security
 alter table public.users enable row level security;
-alter table public.usage enable row level security;
 
 -- Policies
 create policy "Users can read own record" on public.users
   for select using (auth.uid() = id);
 
 create policy "Service role can do everything on users" on public.users
-  using (auth.role() = 'service_role') with check (auth.role() = 'service_role');
-
-create policy "Service role can do everything on usage" on public.usage
   using (auth.role() = 'service_role') with check (auth.role() = 'service_role');
 ```
 
@@ -159,13 +157,13 @@ GitHub Actions workflows handle:
 
 The web admin panel is available at `/admin` (requires `subscription_tier = 'admin'`).
 
-Set the initial admin:
+Set the initial admin directly in the database:
 
 ```sql
 update public.users set subscription_tier = 'admin' where email = 'admin@yourdomain.com';
 ```
 
-Or set `ADMIN_EMAIL` in your environment and the system will automatically assign admin tier on first login.
+The `ADMIN_EMAIL` variable in `.env.example` serves as a documentation reference — there is no automatic tier assignment on first login. The SQL update above is the supported method to grant admin access.
 
 ---
 

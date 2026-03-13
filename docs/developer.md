@@ -103,13 +103,19 @@ export async function POST(req: NextRequest) {
 The `src/services/ai/` module provides a higher-level interface over `lib/openai.ts`:
 
 ```typescript
-import { routeModel, optimizeWithFallback, checkAIRateLimit } from '@/src/services/ai'
+import { routeModel, optimizePrompt, checkAIRateLimit, withFallback } from '@/src/services/ai'
 
 // Select model for user tier
 const model = routeModel('gpt-4o', userTier) // falls back if tier too low
 
 // Optimize with automatic model routing
-const result = await optimizeWithFallback({ prompt, userTier })
+const result = await optimizePrompt({ prompt, userTier })
+
+// Use a manual fallback chain for resilience
+const result2 = await withFallback(
+  () => optimizePrompt({ prompt, model: 'gpt-4o', userTier }),
+  () => optimizePrompt({ prompt, model: 'gpt-4o-mini', userTier: 'free' }),
+)
 
 // Per-tier AI rate limit
 const rl = checkAIRateLimit(userId, userTier)

@@ -17,6 +17,12 @@ export interface ModelConfig {
   supportsJsonMode: boolean
   /** Whether the model is available (can be toggled for maintenance) */
   available: boolean
+  /**
+   * Capability rank — higher is better. Used by routeModel to select the
+   * most capable model available for a given tier when no specific model
+   * is requested.
+   */
+  priority: number
 }
 
 export const SUPPORTED_MODELS: Record<string, ModelConfig> = {
@@ -29,6 +35,7 @@ export const SUPPORTED_MODELS: Record<string, ModelConfig> = {
     minTier: 'pro',
     supportsJsonMode: true,
     available: true,
+    priority: 3,
   },
   'gpt-4o': {
     id: 'gpt-4o',
@@ -39,6 +46,7 @@ export const SUPPORTED_MODELS: Record<string, ModelConfig> = {
     minTier: 'pro',
     supportsJsonMode: true,
     available: true,
+    priority: 4,
   },
   'gpt-4o-mini': {
     id: 'gpt-4o-mini',
@@ -49,6 +57,7 @@ export const SUPPORTED_MODELS: Record<string, ModelConfig> = {
     minTier: 'free',
     supportsJsonMode: true,
     available: true,
+    priority: 2,
   },
   'gpt-3.5-turbo': {
     id: 'gpt-3.5-turbo',
@@ -59,6 +68,7 @@ export const SUPPORTED_MODELS: Record<string, ModelConfig> = {
     minTier: 'free',
     supportsJsonMode: true,
     available: true,
+    priority: 1,
   },
 }
 
@@ -89,10 +99,10 @@ export function routeModel(
     }
   }
 
-  // Default: best model available for this tier
+  // Default: highest-priority model available for this tier
   const available = Object.values(SUPPORTED_MODELS)
     .filter((m) => m.available && TIER_RANK[m.minTier] <= userRank)
-    .sort((a, b) => b.inputCostPer1k - a.inputCostPer1k)
+    .sort((a, b) => b.priority - a.priority)
 
   return available[0] ?? SUPPORTED_MODELS['gpt-4o-mini']
 }

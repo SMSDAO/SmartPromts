@@ -114,11 +114,11 @@ The repository contains two distinct platform targets:
 |----------|------|---------|---------|
 | Build | `build.yml` | PR + push to main | Install, type-check, build (Node 20 + 22) |
 | Lint | `lint.yml` | PR + push to main | ESLint + TypeScript |
-| Test | `test.yml` | PR + push to main | Unit + integration tests |
+| Test | `test.yml` | PR + push to main | `npm test --if-present` (no-op until test runner is added) |
 | Security | `security.yml` | PR + weekly schedule | npm audit + Gitleaks secret scan |
 | Deploy | `deploy.yml` | Push to main | Vercel production deploy |
 
-The existing `ci.yml` (install + lint + test + build) is retained for compatibility.
+The previous monolithic `ci.yml` (install + lint + test + build) is superseded by the above workflows; it can be removed once the team confirms the new workflows are sufficient.
 
 ---
 

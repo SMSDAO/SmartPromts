@@ -86,8 +86,8 @@ SmartPromts/
 
 | Tier | Optimisations/month | Model Access |
 |------|--------------------:|-------------|
-| free | 20 | GPT-3.5 / GPT-4o-mini |
-| pro | 500 | GPT-4 Turbo / GPT-4o |
+| free | 10 | GPT-3.5 / GPT-4o-mini |
+| pro | 1000 | GPT-4 Turbo / GPT-4o |
 | lifetime | Unlimited | All models |
 | enterprise | Unlimited | All models |
 | admin | Unlimited | All models |
@@ -120,18 +120,15 @@ User → POST /api/optimize
 ## Database Schema (Supabase)
 
 ```sql
--- users table
-id          uuid    primary key  (matches auth.users.id)
-email       text    not null
-subscription_tier  text   default 'free'
-banned      boolean default false
-created_at  timestamptz
-updated_at  timestamptz
-
--- usage table
-id          uuid    primary key
-user_id     uuid    references users(id)
-month       text    (YYYY-MM)
-count       integer default 0
-updated_at  timestamptz
+-- users table (usage tracking is stored directly on this table)
+id                     uuid    primary key  (matches auth.users.id)
+email                  text    not null
+subscription_tier      text    default 'free'
+stripe_customer_id     text    nullable
+stripe_subscription_id text    nullable
+usage_count            integer default 0
+usage_reset_at         timestamptz
+banned                 boolean default false
+created_at             timestamptz
+updated_at             timestamptz
 ```

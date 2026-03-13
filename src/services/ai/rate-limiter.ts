@@ -4,11 +4,12 @@
  */
 
 import { rateLimit, type RateLimitResult } from '@/lib/rate-limit'
+import type { SubscriptionTier } from '@/lib/auth'
 
 export type AIRateLimitResult = RateLimitResult
 
 /** Per-tier request limits per minute */
-const TIER_LIMITS: Record<string, number> = {
+const TIER_LIMITS: Record<SubscriptionTier, number> = {
   free: 5,
   pro: 30,
   lifetime: 60,
@@ -22,7 +23,7 @@ const TIER_LIMITS: Record<string, number> = {
  */
 export function checkAIRateLimit(
   userId: string,
-  userTier: string
+  userTier: SubscriptionTier
 ): AIRateLimitResult {
   const limit = TIER_LIMITS[userTier] ?? TIER_LIMITS.free
   return rateLimit(`ai:${userId}`, { interval: 60 * 1000, limit })

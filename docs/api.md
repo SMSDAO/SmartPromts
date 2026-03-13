@@ -38,8 +38,8 @@ Optimise a prompt using OpenAI GPT-4.
     "tokensEstimate": 42
   },
   "usage": {
-    "remaining": 18,
-    "limit": 20,
+    "remaining": 8,
+    "limit": 10,
     "resetAt": "2026-04-01T00:00:00Z",
     "tier": "free"
   }

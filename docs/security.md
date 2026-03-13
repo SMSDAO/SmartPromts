@@ -31,9 +31,8 @@ In-memory rate limiter (`lib/rate-limit.ts`) applied per-user per endpoint:
 | Endpoint | Limit |
 |----------|-------|
 | `POST /api/optimize` | 10 req/min |
-| Admin endpoints | 60 req/min |
 
-For production scale, replace the in-memory store with Redis (see `lib/rate-limit.ts` comments).
+Admin endpoints do not currently apply `rateLimit()`. They rely on admin-only authentication checks via `requireAdmin()`. Adding per-endpoint rate limiting to admin routes is tracked as a future improvement.
 
 ### Environment Variable Protection
 

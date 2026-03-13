@@ -12,13 +12,10 @@ tests/
 
 ## Running Tests
 
-Tests are not yet wired up via `npm test` because there is currently no `test` script
-defined in `package.json`. Once a test runner is configured and a `test` script is
-added, this section should be updated with the exact command (for example,
-`npm test` or `npm run <runner>`).
-
-In the meantime, tests can be added and maintained in this directory, but they
-cannot be executed via a standardized npm script yet.
+The CI workflow (`.github/workflows/test.yml`) runs `npm test --if-present`. Because there
+is currently no `test` script defined in `package.json`, the step is a no-op — it will not
+fail CI. Once a test runner is configured and a `test` script is added, the `--if-present`
+flag should be removed so CI enforces that all tests pass.
 ## Adding Tests
 
 Test files follow the naming convention `*.test.ts` or `*.spec.ts`.
