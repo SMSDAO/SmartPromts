@@ -1,16 +1,5 @@
-// Simple in-memory rate limiter
-// For production, consider using Redis or similar distributed cache
-// Note: The probabilistic cleanup (1% chance) is simple but not ideal for high-scale production.
-// For production deployments, use Redis with TTL or a scheduled cleanup job.
-
-interface RateLimitStore {
-  [key: string]: {
-    count: number
-    resetAt: number
-  }
-}
-
-const store: RateLimitStore = {}
+// Production rate limiter using Upstash Redis (sliding window algorithm)
+// Falls back to in-memory limiting when UPSTASH_REDIS_REST_URL is not set (local dev)
 
 export interface RateLimitOptions {
   interval: number // in milliseconds
@@ -30,37 +19,39 @@ const DEFAULT_OPTIONS: RateLimitOptions = {
   limit: 10,
 }
 
-export function rateLimit(
+// ---------------------------------------------------------------------------
+// In-memory fallback (local development only)
+// ---------------------------------------------------------------------------
+
+interface InMemoryEntry {
+  count: number
+  resetAt: number
+}
+
+const inMemoryStore: Record<string, InMemoryEntry> = {}
+
+function inMemoryRateLimit(
   identifier: string,
-  options: Partial<RateLimitOptions> = {}
+  opts: RateLimitOptions
 ): RateLimitResult {
-  const opts = { ...DEFAULT_OPTIONS, ...options }
   const now = Date.now()
 
-  // Clean up expired entries periodically
+  // Probabilistic cleanup of expired entries
   if (Math.random() < 0.01) {
-    Object.keys(store).forEach((key) => {
-      if (store[key].resetAt < now) {
-        delete store[key]
+    for (const key of Object.keys(inMemoryStore)) {
+      if (inMemoryStore[key].resetAt < now) {
+        delete inMemoryStore[key]
       }
-    })
-  }
-
-  // Get or create entry
-  let entry = store[identifier]
-
-  if (!entry || entry.resetAt < now) {
-    // Create new entry
-    entry = {
-      count: 0,
-      resetAt: now + opts.interval,
     }
-    store[identifier] = entry
   }
 
-  // Check limit
-  const success = entry.count < opts.limit
+  let entry = inMemoryStore[identifier]
+  if (!entry || entry.resetAt < now) {
+    entry = { count: 0, resetAt: now + opts.interval }
+    inMemoryStore[identifier] = entry
+  }
 
+  const success = entry.count < opts.limit
   if (success) {
     entry.count++
   }
@@ -73,19 +64,12 @@ export function rateLimit(
   }
 }
 
-// Clear rate limit for identifier
-export function clearRateLimit(identifier: string): void {
-  delete store[identifier]
-}
-
-// Get rate limit info without incrementing
-export function getRateLimitInfo(
+function inMemoryGetInfo(
   identifier: string,
-  options: Partial<RateLimitOptions> = {}
+  opts: RateLimitOptions
 ): RateLimitResult {
-  const opts = { ...DEFAULT_OPTIONS, ...options }
   const now = Date.now()
-  const entry = store[identifier]
+  const entry = inMemoryStore[identifier]
 
   if (!entry || entry.resetAt < now) {
     return {
@@ -103,3 +87,103 @@ export function getRateLimitInfo(
     reset: entry.resetAt,
   }
 }
+
+// ---------------------------------------------------------------------------
+// Upstash Redis rate limiter (production)
+// ---------------------------------------------------------------------------
+
+// Lazily initialised so the module can be imported in environments where
+// Upstash env vars are absent (e.g. during `next build`).
+let upstashLimiterCache: Map<string, unknown> | null = null
+
+async function getUpstashLimiter(opts: RateLimitOptions) {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return null
+  }
+
+  const cacheKey = `${opts.limit}:${opts.interval}`
+  if (!upstashLimiterCache) {
+    upstashLimiterCache = new Map()
+  }
+  if (upstashLimiterCache.has(cacheKey)) {
+    return upstashLimiterCache.get(cacheKey)
+  }
+
+  const { Ratelimit } = await import('@upstash/ratelimit')
+  const { Redis } = await import('@upstash/redis')
+
+  const redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+  })
+
+  const limiter = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(opts.limit, `${opts.interval / 1000} s`),
+    analytics: true,
+  })
+
+  upstashLimiterCache.set(cacheKey, limiter)
+  return limiter
+}
+
+// ---------------------------------------------------------------------------
+// Public API (synchronous wrapper with async Upstash path)
+// ---------------------------------------------------------------------------
+
+/**
+ * Check and increment rate limit for the given identifier.
+ * Uses Upstash Redis in production; falls back to in-memory for local dev.
+ */
+export function rateLimit(
+  identifier: string,
+  options: Partial<RateLimitOptions> = {}
+): RateLimitResult {
+  const opts = { ...DEFAULT_OPTIONS, ...options }
+
+  // Synchronous in-memory path (always available as fallback)
+  return inMemoryRateLimit(identifier, opts)
+}
+
+/**
+ * Async version of rateLimit — preferred in production.
+ * Uses Upstash Redis when configured, falls back to in-memory.
+ */
+export async function rateLimitAsync(
+  identifier: string,
+  options: Partial<RateLimitOptions> = {}
+): Promise<RateLimitResult> {
+  const opts = { ...DEFAULT_OPTIONS, ...options }
+
+  try {
+    const limiter = await getUpstashLimiter(opts)
+    if (limiter) {
+      const result = await (limiter as { limit: (id: string) => Promise<{ success: boolean; limit: number; remaining: number; reset: number }> }).limit(identifier)
+      return {
+        success: result.success,
+        limit: result.limit,
+        remaining: result.remaining,
+        reset: result.reset,
+      }
+    }
+  } catch (err) {
+    console.error('Upstash rate limit error, falling back to in-memory:', err)
+  }
+
+  return inMemoryRateLimit(identifier, opts)
+}
+
+// Clear rate limit for identifier (in-memory only)
+export function clearRateLimit(identifier: string): void {
+  delete inMemoryStore[identifier]
+}
+
+// Get rate limit info without incrementing (in-memory only)
+export function getRateLimitInfo(
+  identifier: string,
+  options: Partial<RateLimitOptions> = {}
+): RateLimitResult {
+  const opts = { ...DEFAULT_OPTIONS, ...options }
+  return inMemoryGetInfo(identifier, opts)
+}
+

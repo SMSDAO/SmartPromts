@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { upsertUser } from '@/lib/auth'
-import { checkUsageLimit, incrementUsage } from '@/lib/usage'
-import { rateLimit } from '@/lib/rate-limit'
+import { atomicCheckAndIncrement } from '@/lib/usage'
+import { rateLimitAsync } from '@/lib/rate-limit'
 import { optimizePrompt } from '@/lib/openai'
 import { z } from 'zod'
 import { createServerSupabaseClient } from '@/lib/supabase'
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Rate limiting - 10 requests per minute per user
-    const rateLimitResult = rateLimit(`optimize:${userId}`, {
+    const rateLimitResult = await rateLimitAsync(`optimize:${userId}`, {
       interval: 60 * 1000,
       limit: 10,
     })
@@ -57,25 +57,34 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Check usage limit
-    const usageCheck = await checkUsageLimit(userId, user.subscription_tier)
+    // Parse and validate request body
+    const body = await req.json()
+    const validatedData = OptimizeSchema.parse(body)
 
-    if (!usageCheck.allowed) {
+    // Atomically check usage and increment in one operation to prevent race conditions
+    let usageResult
+    try {
+      usageResult = await atomicCheckAndIncrement(userId, user.subscription_tier)
+    } catch (usageError) {
+      console.error('Usage check failed:', usageError)
+      return NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      )
+    }
+
+    if (!usageResult.allowed) {
       return NextResponse.json(
         {
           error: 'Usage limit reached',
-          limit: usageCheck.limit,
-          remaining: usageCheck.remaining,
-          resetAt: usageCheck.resetAt,
+          limit: usageResult.limit,
+          remaining: usageResult.remaining,
+          resetAt: usageResult.resetAt,
           tier: user.subscription_tier,
         },
         { status: 403 }
       )
     }
-
-    // Parse and validate request body
-    const body = await req.json()
-    const validatedData = OptimizeSchema.parse(body)
 
     // Optimize the prompt
     const result = await optimizePrompt({
@@ -84,26 +93,14 @@ export async function POST(req: NextRequest) {
       context: validatedData.context,
     })
 
-    // Increment usage count and get updated remaining count
-    let actualRemaining = usageCheck.remaining - 1
-    try {
-      await incrementUsage(userId)
-      // Re-check usage to get actual remaining after increment
-      const updatedUsage = await checkUsageLimit(userId, user.subscription_tier)
-      actualRemaining = updatedUsage.remaining
-    } catch (usageError) {
-      console.error('Failed to increment usage (non-blocking):', usageError)
-      // Continue - usage tracking failure shouldn't block the optimization result
-    }
-
     // Return result with usage info
     return NextResponse.json({
       success: true,
       data: result,
       usage: {
-        remaining: usageCheck.limit === -1 ? -1 : actualRemaining,
-        limit: usageCheck.limit,
-        resetAt: usageCheck.resetAt,
+        remaining: usageResult.limit === -1 ? -1 : usageResult.remaining,
+        limit: usageResult.limit,
+        resetAt: usageResult.resetAt,
         tier: user.subscription_tier,
       },
     })
@@ -123,3 +120,4 @@ export async function POST(req: NextRequest) {
     )
   }
 }
+

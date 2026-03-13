@@ -85,6 +85,75 @@ export async function incrementUsage(userId: string): Promise<void> {
   }
 }
 
+/**
+ * Atomically check usage and increment in a single RPC call.
+ * Uses the check_and_increment_usage PostgreSQL function which applies
+ * row-level locking (FOR UPDATE) to eliminate race conditions.
+ *
+ * Falls back to the non-atomic checkUsageLimit + incrementUsage pair
+ * if the RPC function is not available (e.g., during local development
+ * before running scripts/setup-atomic-usage.sql).
+ */
+export async function atomicCheckAndIncrement(
+  userId: string,
+  tier: SubscriptionTier
+): Promise<UsageCheckResult> {
+  const supabase = await createServerSupabaseClient()
+  const limit = USAGE_LIMITS[tier]
+
+  // For unlimited tiers, skip the RPC and just increment directly
+  if (limit === -1) {
+    await incrementUsage(userId).catch((err) =>
+      console.error('Failed to increment unlimited usage (non-blocking):', err)
+    )
+    return {
+      allowed: true,
+      remaining: -1,
+      limit: -1,
+      resetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    }
+  }
+
+  const { data, error } = await supabase.rpc('check_and_increment_usage', {
+    p_user_id: userId,
+    p_tier: tier,
+    p_limit: limit,
+  })
+
+  // If the RPC function doesn't exist yet, fall back gracefully
+  if (error) {
+    if (
+      error.code === 'PGRST202' ||
+      error.message?.includes('check_and_increment_usage')
+    ) {
+      console.warn(
+        'check_and_increment_usage RPC not found — falling back to non-atomic path. ' +
+          'Run scripts/setup-atomic-usage.sql in Supabase to enable atomic usage tracking.'
+      )
+      const check = await checkUsageLimit(userId, tier)
+      if (check.allowed) {
+        await incrementUsage(userId)
+      }
+      return check
+    }
+    throw new Error(`Atomic usage check failed: ${error.message}`)
+  }
+
+  if (!data || data.length === 0) {
+    throw new Error('Atomic usage check returned no data')
+  }
+
+  const row = data[0] as { allowed: boolean; remaining: number }
+  const resetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+
+  return {
+    allowed: row.allowed,
+    remaining: row.remaining,
+    limit,
+    resetAt,
+  }
+}
+
 // Get usage stats
 export async function getUsageStats(userId: string) {
   const supabase = await createServerSupabaseClient()
@@ -110,3 +179,4 @@ export async function getUsageStats(userId: string) {
     tier: user.subscription_tier,
   }
 }
+
