@@ -33,7 +33,7 @@ BEGIN
     v_count := 0;
   END IF;
 
-  -- Check limit (-1 means unlimited)
+  -- Check limit (-1 means unlimited usage (lifetime/enterprise/admin tiers))
   IF p_limit = -1 OR v_count < p_limit THEN
     -- Increment usage
     UPDATE users

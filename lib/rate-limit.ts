@@ -1,6 +1,8 @@
 // Production rate limiter using Upstash Redis (sliding window algorithm)
 // Falls back to in-memory limiting when UPSTASH_REDIS_REST_URL is not set (local dev)
 
+import type { Ratelimit } from '@upstash/ratelimit'
+
 export interface RateLimitOptions {
   interval: number // in milliseconds
   limit: number
@@ -94,9 +96,9 @@ function inMemoryGetInfo(
 
 // Lazily initialised so the module can be imported in environments where
 // Upstash env vars are absent (e.g. during `next build`).
-let upstashLimiterCache: Map<string, unknown> | null = null
+let upstashLimiterCache: Map<string, Ratelimit> | null = null
 
-async function getUpstashLimiter(opts: RateLimitOptions) {
+async function getUpstashLimiter(opts: RateLimitOptions): Promise<Ratelimit | null> {
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
     return null
   }
@@ -105,9 +107,8 @@ async function getUpstashLimiter(opts: RateLimitOptions) {
   if (!upstashLimiterCache) {
     upstashLimiterCache = new Map()
   }
-  if (upstashLimiterCache.has(cacheKey)) {
-    return upstashLimiterCache.get(cacheKey)
-  }
+  const cached = upstashLimiterCache.get(cacheKey)
+  if (cached) return cached
 
   const { Ratelimit } = await import('@upstash/ratelimit')
   const { Redis } = await import('@upstash/redis')
@@ -158,7 +159,7 @@ export async function rateLimitAsync(
   try {
     const limiter = await getUpstashLimiter(opts)
     if (limiter) {
-      const result = await (limiter as { limit: (id: string) => Promise<{ success: boolean; limit: number; remaining: number; reset: number }> }).limit(identifier)
+      const result = await limiter.limit(identifier)
       return {
         success: result.success,
         limit: result.limit,

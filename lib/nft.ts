@@ -20,7 +20,7 @@ function getPublicClient() {
 
 /**
  * Verify whether a wallet address holds a SmartPromts Lifetime Pass NFT.
- * Returns false (not true) on any contract or network error.
+ * Returns false on any contract or network error.
  */
 export async function verifyLifetimePass(walletAddress: string): Promise<boolean> {
   if (!isAddress(walletAddress)) {

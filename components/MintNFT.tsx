@@ -2,12 +2,25 @@
 
 import { useState } from 'react'
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
-import { parseEther, formatEther } from 'viem'
+import { formatEther } from 'viem'
 import { base } from 'wagmi/chains'
 import {
   SMARTPROMTS_LIFETIME_PASS_ABI,
   NFT_CONTRACT_ADDRESS,
 } from '@/lib/contracts/SmartPromtsLifetimePass'
+
+// Pricing tiers matching the SmartPromtsLifetimePass contract constants
+const PRICE_TIERS = [
+  { label: 'Early Bird', range: '1–100', price: '0.05', threshold: 0, maxTokens: 100 },
+  { label: 'Regular',    range: '101–600', price: '0.075', threshold: 100, maxTokens: 600 },
+  { label: 'Final',      range: '601–1000', price: '0.1', threshold: 600, maxTokens: 1000 },
+] as const
+
+function getCurrentTierLabel(totalSupply: number): string {
+  if (totalSupply < PRICE_TIERS[0].maxTokens) return PRICE_TIERS[0].label
+  if (totalSupply < PRICE_TIERS[1].maxTokens) return PRICE_TIERS[1].label
+  return PRICE_TIERS[2].label
+}
 
 interface NFTStats {
   totalSupply: number
@@ -75,12 +88,7 @@ export function MintNFT({ stats, onMintSuccess }: MintNFTProps) {
   }
 
   const priceInEth = formatEther(stats.currentPrice)
-  const priceTier =
-    stats.totalSupply < 100
-      ? 'Early Bird'
-      : stats.totalSupply < 600
-      ? 'Regular'
-      : 'Final'
+  const priceTier = getCurrentTierLabel(stats.totalSupply)
   const progressPct = Math.round((stats.totalSupply / stats.maxSupply) * 100)
 
   return (
@@ -106,29 +114,30 @@ export function MintNFT({ stats, onMintSuccess }: MintNFTProps) {
 
       {/* Pricing tiers */}
       <div className="grid gap-3 sm:grid-cols-3">
-        {[
-          { label: 'Early Bird', range: '1–100', price: '0.05', active: stats.totalSupply < 100 },
-          { label: 'Regular', range: '101–600', price: '0.075', active: stats.totalSupply >= 100 && stats.totalSupply < 600 },
-          { label: 'Final', range: '601–1000', price: '0.1', active: stats.totalSupply >= 600 },
-        ].map((tier) => (
-          <div
-            key={tier.label}
-            className={`rounded-xl border p-3 text-center transition-all ${
-              tier.active
-                ? 'border-cyan-500/50 bg-cyan-950/30 shadow-[0_0_16px_rgba(34,211,238,0.1)]'
-                : 'border-slate-700/50 bg-slate-900/40 opacity-60'
-            }`}
-          >
-            {tier.active && (
-              <span className="mb-1.5 inline-block rounded-full bg-cyan-500/20 px-2 py-0.5 text-xs font-medium text-cyan-400">
-                Current
-              </span>
-            )}
-            <p className="text-sm font-medium text-slate-200">{tier.label}</p>
-            <p className="text-xs text-slate-500">{tier.range}</p>
-            <p className="mt-1 font-mono text-lg font-bold text-white">{tier.price} ETH</p>
-          </div>
-        ))}
+        {PRICE_TIERS.map((tier) => {
+          const active =
+            stats.totalSupply >= tier.threshold &&
+            stats.totalSupply < tier.maxTokens
+          return (
+            <div
+              key={tier.label}
+              className={`rounded-xl border p-3 text-center transition-all ${
+                active
+                  ? 'border-cyan-500/50 bg-cyan-950/30 shadow-[0_0_16px_rgba(34,211,238,0.1)]'
+                  : 'border-slate-700/50 bg-slate-900/40 opacity-60'
+              }`}
+            >
+              {active && (
+                <span className="mb-1.5 inline-block rounded-full bg-cyan-500/20 px-2 py-0.5 text-xs font-medium text-cyan-400">
+                  Current
+                </span>
+              )}
+              <p className="text-sm font-medium text-slate-200">{tier.label}</p>
+              <p className="text-xs text-slate-500">{tier.range}</p>
+              <p className="mt-1 font-mono text-lg font-bold text-white">{tier.price} ETH</p>
+            </div>
+          )
+        })}
       </div>
 
       {/* Status messages */}
