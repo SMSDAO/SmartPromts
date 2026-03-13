@@ -24,6 +24,7 @@
     "STRIPE_PRICE_ID_LIFETIME": "@stripe-lifetime-price-id",
     "NEXT_PUBLIC_APP_URL": "@app-url",
     "NFT_CONTRACT_ADDRESS": "@nft-contract-address",
+    "NEXT_PUBLIC_NFT_CONTRACT_ADDRESS": "@nft-contract-address",
     "BASE_RPC_URL": "@base-rpc-url",
     "NEXT_PUBLIC_BASE_RPC_URL": "@next-public-base-rpc-url",
     "ADMIN_EMAIL": "@admin-email",

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { verifyLifetimePass } from '@/lib/nft'
 import { createAdminClient } from '@/lib/supabase'
-import { isAddress } from 'viem'
+import { isAddress, verifyMessage } from 'viem'
 import { z } from 'zod'
 
 const VerifyNFTSchema = z.object({
@@ -12,7 +12,20 @@ const VerifyNFTSchema = z.object({
     .refine((addr) => isAddress(addr), {
       message: 'Invalid Ethereum wallet address',
     }),
+  /**
+   * Optional EIP-191 `personal_sign` signature of the ownership-proof message.
+   * When provided, the server verifies the signature before upgrading the tier.
+   * When omitted, the endpoint performs a read-only check (no upgrade).
+   */
+  signature: z.string().optional(),
+  /** When true, only check NFT ownership — do not upgrade tier regardless of result. */
+  checkOnly: z.boolean().optional(),
 })
+
+/** Build the same deterministic message the client signs. */
+function ownershipMessage(walletAddress: string): string {
+  return `Verify SmartPromts Lifetime Pass ownership.\nAddress: ${walletAddress.toLowerCase()}`
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,15 +45,55 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { walletAddress } = parsed.data
+    const { walletAddress, signature, checkOnly } = parsed.data
 
     // Check NFT ownership on-chain
     const hasPass = await verifyLifetimePass(walletAddress)
 
+    // -----------------------------------------------------------------------
+    // Tier upgrade logic
+    // -----------------------------------------------------------------------
+    // An upgrade requires BOTH:
+    //   1. The wallet holds a Lifetime Pass (on-chain), AND
+    //   2. The caller proves they own that wallet by providing a valid
+    //      EIP-191 signature of the ownership-proof message.
+    //
+    // Without the signature, any authenticated user could submit someone
+    // else's wallet address and get their own account upgraded for free.
+    // -----------------------------------------------------------------------
+
     let upgraded = false
 
-    // Auto-upgrade subscription tier if user holds a Lifetime Pass
-    if (hasPass && user.subscription_tier !== 'lifetime' && user.subscription_tier !== 'admin') {
+    const wantsUpgrade =
+      hasPass &&
+      !checkOnly &&
+      signature &&
+      user.subscription_tier !== 'lifetime' &&
+      user.subscription_tier !== 'admin'
+
+    if (wantsUpgrade) {
+      // Verify the signature proves the caller controls the wallet
+      const message = ownershipMessage(walletAddress)
+      let signatureValid = false
+      try {
+        signatureValid = await verifyMessage({
+          address: walletAddress as `0x${string}`,
+          message,
+          signature: signature as `0x${string}`,
+        })
+      } catch {
+        // Invalid signature format — treat as unverified
+        signatureValid = false
+      }
+
+      if (!signatureValid) {
+        return NextResponse.json(
+          { error: 'Invalid wallet signature. Please sign the verification message.' },
+          { status: 403 }
+        )
+      }
+
+      // Signature is valid — upgrade the tier
       const adminClient = createAdminClient()
       const { error } = await adminClient
         .from('users')

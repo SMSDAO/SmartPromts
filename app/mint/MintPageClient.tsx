@@ -8,7 +8,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { MintNFT } from '@/components/MintNFT'
 import {
   SMARTPROMTS_LIFETIME_PASS_ABI,
-  NFT_CONTRACT_ADDRESS,
+  CLIENT_NFT_CONTRACT_ADDRESS,
 } from '@/lib/contracts/SmartPromtsLifetimePass'
 
 interface MintPageClientProps {
@@ -26,11 +26,11 @@ export function MintPageClient({ stats: serverStats }: MintPageClientProps) {
 
   // Read whether current wallet has already minted
   const { data: hasMinted } = useReadContract({
-    address: NFT_CONTRACT_ADDRESS || undefined,
+    address: CLIENT_NFT_CONTRACT_ADDRESS || undefined,
     abi: SMARTPROMTS_LIFETIME_PASS_ABI,
     functionName: 'hasMinted',
     args: address ? [address] : undefined,
-    query: { enabled: !!address && !!NFT_CONTRACT_ADDRESS },
+    query: { enabled: !!address && !!CLIENT_NFT_CONTRACT_ADDRESS },
   })
 
   const mintStats = {
@@ -111,17 +111,17 @@ export function MintPageClient({ stats: serverStats }: MintPageClientProps) {
                   <dt className="text-slate-500">Standard</dt>
                   <dd className="font-medium text-slate-200">ERC-721</dd>
                 </div>
-                {NFT_CONTRACT_ADDRESS && (
+                {CLIENT_NFT_CONTRACT_ADDRESS && (
                   <div className="flex items-start justify-between gap-2">
                     <dt className="shrink-0 text-slate-500">Contract</dt>
                     <dd className="break-all text-right font-mono text-xs text-cyan-400">
                       <a
-                        href={`https://basescan.org/address/${NFT_CONTRACT_ADDRESS}`}
+                        href={`https://basescan.org/address/${CLIENT_NFT_CONTRACT_ADDRESS}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="hover:underline"
                       >
-                        {NFT_CONTRACT_ADDRESS}
+                        {CLIENT_NFT_CONTRACT_ADDRESS}
                       </a>
                     </dd>
                   </div>

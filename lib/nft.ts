@@ -20,7 +20,10 @@ function getPublicClient() {
 
 /**
  * Verify whether a wallet address holds a SmartPromts Lifetime Pass NFT.
- * Returns false on any contract or network error.
+ *
+ * Throws for invalid wallet address format (caller should validate before
+ * calling). Returns false — rather than throwing — for contract or network
+ * errors so the API layer can surface a clean error response.
  */
 export async function verifyLifetimePass(walletAddress: string): Promise<boolean> {
   if (!isAddress(walletAddress)) {
@@ -34,14 +37,18 @@ export async function verifyLifetimePass(walletAddress: string): Promise<boolean
 
   const client = getPublicClient()
 
-  const hasPass = await client.readContract({
-    address: NFT_CONTRACT_ADDRESS,
-    abi: SMARTPROMTS_LIFETIME_PASS_ABI,
-    functionName: 'hasLifetimePass',
-    args: [walletAddress as `0x${string}`],
-  })
-
-  return Boolean(hasPass)
+  try {
+    const hasPass = await client.readContract({
+      address: NFT_CONTRACT_ADDRESS,
+      abi: SMARTPROMTS_LIFETIME_PASS_ABI,
+      functionName: 'hasLifetimePass',
+      args: [walletAddress as `0x${string}`],
+    })
+    return Boolean(hasPass)
+  } catch (err) {
+    console.error('verifyLifetimePass contract call failed:', err)
+    return false
+  }
 }
 
 /**
@@ -54,11 +61,16 @@ export async function getCurrentMintPrice(): Promise<bigint> {
 
   const client = getPublicClient()
 
-  return await client.readContract({
-    address: NFT_CONTRACT_ADDRESS,
-    abi: SMARTPROMTS_LIFETIME_PASS_ABI,
-    functionName: 'getCurrentPrice',
-  })
+  try {
+    return await client.readContract({
+      address: NFT_CONTRACT_ADDRESS,
+      abi: SMARTPROMTS_LIFETIME_PASS_ABI,
+      functionName: 'getCurrentPrice',
+    })
+  } catch (err) {
+    console.error('getCurrentMintPrice contract call failed:', err)
+    return BigInt(0)
+  }
 }
 
 /**

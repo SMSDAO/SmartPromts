@@ -143,8 +143,11 @@ export async function atomicCheckAndIncrement(
     throw new Error('Atomic usage check returned no data')
   }
 
-  const row = data[0] as { allowed: boolean; remaining: number }
-  const resetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+  const row = data[0] as { allowed: boolean; remaining: number; reset_at: string }
+  // Use the real reset_at returned by the SQL function instead of synthesising it
+  const resetAt = row.reset_at
+    ? new Date(row.reset_at)
+    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
 
   return {
     allowed: row.allowed,

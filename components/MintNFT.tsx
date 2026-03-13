@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSignMessage } from 'wagmi'
 import { formatEther } from 'viem'
 import { base } from 'wagmi/chains'
 import {
   SMARTPROMTS_LIFETIME_PASS_ABI,
-  NFT_CONTRACT_ADDRESS,
+  CLIENT_NFT_CONTRACT_ADDRESS,
 } from '@/lib/contracts/SmartPromtsLifetimePass'
 
 // Pricing tiers matching the SmartPromtsLifetimePass contract constants
@@ -20,6 +20,11 @@ function getCurrentTierLabel(totalSupply: number): string {
   if (totalSupply < PRICE_TIERS[0].maxTokens) return PRICE_TIERS[0].label
   if (totalSupply < PRICE_TIERS[1].maxTokens) return PRICE_TIERS[1].label
   return PRICE_TIERS[2].label
+}
+
+/** Build the deterministic ownership-proof message signed by the wallet. */
+function ownershipMessage(walletAddress: string): string {
+  return `Verify SmartPromts Lifetime Pass ownership.\nAddress: ${walletAddress.toLowerCase()}`
 }
 
 interface NFTStats {
@@ -37,42 +42,60 @@ interface MintNFTProps {
 
 /**
  * Reusable mint component for the SmartPromts Lifetime Pass NFT.
- * Handles the full mint lifecycle: connect → mint → confirm → verify.
+ * Handles the full mint lifecycle: connect → mint → confirm → sign → verify.
  */
 export function MintNFT({ stats, onMintSuccess }: MintNFTProps) {
   const { address, isConnected, chainId } = useAccount()
   const [verifying, setVerifying] = useState(false)
   const [verified, setVerified] = useState(false)
   const [upgradeMessage, setUpgradeMessage] = useState<string | null>(null)
+  const [verifyError, setVerifyError] = useState<string | null>(null)
 
   const { writeContract, data: txHash, isPending, error: writeError } = useWriteContract()
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash: txHash,
   })
+  const { signMessageAsync } = useSignMessage()
 
   const isWrongNetwork = isConnected && chainId !== base.id
 
   async function handleMint() {
-    if (!address || !NFT_CONTRACT_ADDRESS) return
+    if (!address || !CLIENT_NFT_CONTRACT_ADDRESS) return
     writeContract({
-      address: NFT_CONTRACT_ADDRESS,
+      address: CLIENT_NFT_CONTRACT_ADDRESS,
       abi: SMARTPROMTS_LIFETIME_PASS_ABI,
       functionName: 'mint',
       value: stats.currentPrice,
     })
   }
 
-  // Auto-verify after confirmed
+  /**
+   * Verify wallet ownership via a signed message before upgrading the tier.
+   * The signature proves the caller controls the submitted wallet address.
+   */
   async function handleVerify() {
     if (!address || verifying) return
     setVerifying(true)
+    setVerifyError(null)
     try {
+      // 1. Ask the wallet to sign the ownership-proof message
+      const message = ownershipMessage(address)
+      const signature = await signMessageAsync({ message })
+
+      // 2. Send address + signature to server for on-chain verification + upgrade
       const res = await fetch('/api/verify-nft', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ walletAddress: address }),
+        body: JSON.stringify({ walletAddress: address, signature }),
       })
       const data = await res.json()
+
+      if (!res.ok) {
+        setVerifyError(data.error ?? 'Verification failed. Please try again.')
+        return
+      }
+
+      // Only mark verified after a confirmed success response
       setVerified(true)
       if (data.upgraded) {
         setUpgradeMessage('🎉 Account upgraded to Lifetime tier!')
@@ -80,8 +103,9 @@ export function MintNFT({ stats, onMintSuccess }: MintNFTProps) {
       } else if (data.hasPass) {
         setUpgradeMessage('✅ Lifetime Pass verified.')
       }
-    } catch {
-      setUpgradeMessage('Could not auto-verify. Please refresh the page.')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message.split('\n')[0] : 'Unknown error'
+      setVerifyError(`Could not verify: ${msg}`)
     } finally {
       setVerifying(false)
     }
@@ -175,7 +199,7 @@ export function MintNFT({ stats, onMintSuccess }: MintNFTProps) {
           </p>
           {isConfirming && <p className="mt-1 text-yellow-400">⏳ Confirming transaction…</p>}
           {isConfirmed && !verified && (
-            <p className="mt-1 text-green-400">✅ Confirmed! Verifying ownership…</p>
+            <p className="mt-1 text-green-400">✅ Confirmed! Click below to activate your tier.</p>
           )}
         </div>
       )}
@@ -183,6 +207,12 @@ export function MintNFT({ stats, onMintSuccess }: MintNFTProps) {
       {upgradeMessage && (
         <div className="rounded-xl border border-green-500/30 bg-green-950/20 px-4 py-3 text-sm text-green-400">
           {upgradeMessage}
+        </div>
+      )}
+
+      {verifyError && (
+        <div className="rounded-xl border border-red-500/30 bg-red-950/20 px-4 py-3 text-sm text-red-400">
+          {verifyError}
         </div>
       )}
 
@@ -214,7 +244,7 @@ export function MintNFT({ stats, onMintSuccess }: MintNFTProps) {
             disabled={verifying}
             className="w-full rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:from-green-400 hover:to-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {verifying ? 'Verifying…' : 'Verify & Activate Lifetime Tier'}
+            {verifying ? 'Sign in wallet to verify…' : 'Sign & Activate Lifetime Tier'}
           </button>
         ) : (
           <button
@@ -225,7 +255,7 @@ export function MintNFT({ stats, onMintSuccess }: MintNFTProps) {
               !stats.mintingEnabled ||
               stats.hasMinted ||
               isWrongNetwork ||
-              !NFT_CONTRACT_ADDRESS
+              !CLIENT_NFT_CONTRACT_ADDRESS
             }
             className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-3 text-sm font-semibold text-white shadow-[0_0_20px_rgba(34,211,238,0.3)] transition-all hover:from-cyan-400 hover:to-blue-500 hover:shadow-[0_0_32px_rgba(34,211,238,0.45)] disabled:cursor-not-allowed disabled:opacity-60"
           >

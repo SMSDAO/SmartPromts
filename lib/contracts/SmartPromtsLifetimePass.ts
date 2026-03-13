@@ -74,8 +74,24 @@ export const SMARTPROMTS_LIFETIME_PASS_ABI = [
   },
 ] as const
 
+/**
+ * Server-only contract address (not prefixed with NEXT_PUBLIC_).
+ * Only use this in API routes / server components.
+ */
 export const NFT_CONTRACT_ADDRESS =
   (process.env.NFT_CONTRACT_ADDRESS ?? '') as `0x${string}`
+
+/**
+ * Client-safe contract address exposed via NEXT_PUBLIC_NFT_CONTRACT_ADDRESS.
+ * Use this in client components (MintNFT, MintPageClient, etc.) so that the
+ * address is bundled into the client JavaScript.
+ *
+ * Note: if only NFT_CONTRACT_ADDRESS is set (no NEXT_PUBLIC_ variant) the
+ * client address will be empty. Make sure to set NEXT_PUBLIC_NFT_CONTRACT_ADDRESS
+ * in your .env / Vercel environment variables.
+ */
+export const CLIENT_NFT_CONTRACT_ADDRESS =
+  (process.env.NEXT_PUBLIC_NFT_CONTRACT_ADDRESS ?? '') as `0x${string}`
 
 export const BASE_CHAIN_ID = 8453
 export const BASE_SEPOLIA_CHAIN_ID = 84532
