@@ -1,6 +1,6 @@
 /**
  * AI-specific rate limiter — wraps the global rate limiter with
- * per-model and per-tier limits.
+ * per-tier limits based on user subscription tier.
  */
 
 import { rateLimit, type RateLimitResult } from '@/lib/rate-limit'
