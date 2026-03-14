@@ -120,20 +120,45 @@ export default async function DeveloperPage() {
         {/* Stats row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'API Endpoints', value: apiEndpoints.length, icon: Server, color: 'cyan' },
-            { label: 'Env Vars Set', value: `${configuredCount}/${envVars.length}`, icon: FileCode2, color: 'blue' },
-            { label: 'Required Configured', value: `${requiredConfigured}/${requiredCount}`, icon: Activity, color: requiredConfigured === requiredCount ? 'green' : 'red' },
-            { label: 'Runtime', value: 'Next.js 15', icon: Cpu, color: 'purple' },
-          ].map(({ label, value, icon: Icon, color }) => (
-            <div
-              key={label}
-              className={`bg-slate-800/50 border border-${color}-500/20 rounded-xl p-5`}
-            >
-              <div className={`flex items-center justify-between mb-3`}>
+            {
+              label: 'API Endpoints',
+              value: apiEndpoints.length,
+              icon: Server,
+              cardClass: 'bg-slate-800/50 border border-cyan-500/20 rounded-xl p-5',
+              iconClass: 'h-4 w-4 text-cyan-400',
+              valueClass: 'text-2xl font-bold text-cyan-300',
+            },
+            {
+              label: 'Env Vars Set',
+              value: `${configuredCount}/${envVars.length}`,
+              icon: FileCode2,
+              cardClass: 'bg-slate-800/50 border border-blue-500/20 rounded-xl p-5',
+              iconClass: 'h-4 w-4 text-blue-400',
+              valueClass: 'text-2xl font-bold text-blue-300',
+            },
+            {
+              label: 'Required Configured',
+              value: `${requiredConfigured}/${requiredCount}`,
+              icon: Activity,
+              cardClass: `bg-slate-800/50 border ${requiredConfigured === requiredCount ? 'border-green-500/20' : 'border-red-500/20'} rounded-xl p-5`,
+              iconClass: `h-4 w-4 ${requiredConfigured === requiredCount ? 'text-green-400' : 'text-red-400'}`,
+              valueClass: `text-2xl font-bold ${requiredConfigured === requiredCount ? 'text-green-300' : 'text-red-300'}`,
+            },
+            {
+              label: 'Runtime',
+              value: 'Next.js 15',
+              icon: Cpu,
+              cardClass: 'bg-slate-800/50 border border-purple-500/20 rounded-xl p-5',
+              iconClass: 'h-4 w-4 text-purple-400',
+              valueClass: 'text-2xl font-bold text-purple-300',
+            },
+          ].map(({ label, value, icon: Icon, cardClass, iconClass, valueClass }) => (
+            <div key={label} className={cardClass}>
+              <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">{label}</span>
-                <Icon className={`h-4 w-4 text-${color}-400`} />
+                <Icon className={iconClass} />
               </div>
-              <p className={`text-2xl font-bold text-${color}-300`}>{value}</p>
+              <p className={valueClass}>{value}</p>
             </div>
           ))}
         </div>
