@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import Link from 'next/link'
-import { Zap, LogOut } from 'lucide-react'
+import { Zap, LogOut, LayoutDashboard, Settings, Code2, Shield } from 'lucide-react'
+import { getCurrentUser } from '@/lib/auth'
 
 export default async function DashboardLayout({
   children,
@@ -15,6 +16,10 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
+  const user = await getCurrentUser()
+  const isAdmin = user?.subscription_tier === 'admin'
+  const isDeveloper = user?.subscription_tier === 'developer' || isAdmin
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
@@ -26,23 +31,49 @@ export default async function DashboardLayout({
                 SmartPromts
               </span>
             </Link>
-            <nav className="flex items-center space-x-6">
+            <nav className="flex items-center space-x-1">
               <Link
                 href="/dashboard"
-                className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 transition-all"
               >
-                Dashboard
+                <LayoutDashboard className="h-4 w-4" />
+                <span>Dashboard</span>
               </Link>
               <Link
+                href="/dashboard/settings"
+                className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 transition-all"
+              >
+                <Settings className="h-4 w-4" />
+                <span>Settings</span>
+              </Link>
+              {isDeveloper && (
+                <Link
+                  href="/developer"
+                  className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 transition-all"
+                >
+                  <Code2 className="h-4 w-4" />
+                  <span>Developer</span>
+                </Link>
+              )}
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 transition-all"
+                >
+                  <Shield className="h-4 w-4" />
+                  <span>Admin</span>
+                </Link>
+              )}
+              <Link
                 href="/pricing"
-                className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                className="px-3 py-2 rounded-lg text-sm text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 transition-all"
               >
                 Pricing
               </Link>
               <form action="/api/auth/signout" method="post">
                 <button
                   type="submit"
-                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 transition-all"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Sign Out</span>
@@ -56,3 +87,4 @@ export default async function DashboardLayout({
     </div>
   )
 }
+

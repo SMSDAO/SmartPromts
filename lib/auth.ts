@@ -1,7 +1,7 @@
 import { createServerSupabaseClient } from './supabase'
 import { NextResponse } from 'next/server'
 
-export type SubscriptionTier = 'free' | 'pro' | 'enterprise' | 'lifetime' | 'admin'
+export type SubscriptionTier = 'free' | 'pro' | 'enterprise' | 'lifetime' | 'admin' | 'developer' | 'auditor'
 
 export interface User {
   id: string

@@ -8,6 +8,8 @@ const USAGE_LIMITS: Record<SubscriptionTier, number> = {
   enterprise: -1, // unlimited
   lifetime: -1,   // unlimited
   admin: -1,      // unlimited
+  developer: -1,  // unlimited
+  auditor: 100,   // read-heavy role
 }
 
 export interface UsageCheckResult {

@@ -24,6 +24,14 @@ export default function HomePage() {
               Pricing
             </Link>
             <Link
+              href="https://github.com/SMSDAO/SmartPromts/tree/main/docs"
+              className="text-gray-300 hover:text-cyan-400 transition-colors"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Docs
+            </Link>
+            <Link
               href="/login"
               className="px-4 py-2 text-gray-300 hover:text-cyan-400 transition-colors"
             >

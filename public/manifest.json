@@ -1,0 +1,27 @@
+{
+  "name": "SmartPromts",
+  "short_name": "SmartPromts",
+  "description": "AI-Powered Prompt Optimization for GPT-4, Claude, Gemini, and more",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0f1e",
+  "theme_color": "#06b6d4",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["productivity", "utilities"],
+  "lang": "en"
+}

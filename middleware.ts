@@ -76,6 +76,25 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Protect developer routes - requires admin or developer tier
+  if (request.nextUrl.pathname.startsWith('/developer')) {
+    if (!session) {
+      const redirectUrl = new URL('/login', request.url)
+      redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
+      return NextResponse.redirect(redirectUrl)
+    }
+
+    const { data: user } = await supabase
+      .from('users')
+      .select('subscription_tier')
+      .eq('id', session.user.id)
+      .single()
+
+    if (!user || (user.subscription_tier !== 'admin' && user.subscription_tier !== 'developer')) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+  }
+
   // Redirect authenticated users away from login page
   if (request.nextUrl.pathname === '/login' && session) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
@@ -85,5 +104,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin/:path*', '/login'],
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/developer/:path*', '/login'],
 }
