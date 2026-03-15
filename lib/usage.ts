@@ -12,6 +12,17 @@ export const USAGE_LIMITS: Record<SubscriptionTier, number> = {
   auditor: 100,   // read-heavy role
 }
 
+// Pure helpers — no DB required, safe to use in tests and edge middleware
+export function isAllowed(tier: SubscriptionTier, usageCount: number): boolean {
+  const limit = USAGE_LIMITS[tier]
+  return limit === -1 || usageCount < limit
+}
+
+export function getRemainingUsage(tier: SubscriptionTier, usageCount: number): number {
+  const limit = USAGE_LIMITS[tier]
+  return limit === -1 ? -1 : limit - usageCount
+}
+
 export interface UsageCheckResult {
   allowed: boolean
   remaining: number

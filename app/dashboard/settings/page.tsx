@@ -1,37 +1,20 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
 import { Bell, Lock, Palette, User } from 'lucide-react'
 
 export default function SettingsPage() {
-  const [saved, setSaved] = useState(false)
-  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // Clean up the "saved" flash timer on unmount to avoid state updates after unmount
-  useEffect(() => {
-    return () => {
-      if (savedTimerRef.current !== null) {
-        clearTimeout(savedTimerRef.current)
-      }
-    }
-  }, [])
-
-  const handleSave = () => {
-    if (savedTimerRef.current !== null) {
-      clearTimeout(savedTimerRef.current)
-    }
-    setSaved(true)
-    savedTimerRef.current = setTimeout(() => {
-      setSaved(false)
-      savedTimerRef.current = null
-    }, 2000)
-  }
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Settings</h1>
         <p className="text-gray-600 dark:text-gray-300">Manage your account preferences</p>
+      </div>
+
+      <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-700/50 dark:bg-amber-900/20">
+        <span className="mt-0.5 text-amber-500">⚠</span>
+        <p className="text-sm text-amber-800 dark:text-amber-200">
+          <strong>Settings persistence coming soon.</strong> These preferences are not yet saved. Full profile, notification, and appearance management will be available in a future release.
+        </p>
       </div>
 
       <div className="space-y-6">
@@ -124,10 +107,11 @@ export default function SettingsPage() {
 
         <div className="flex justify-end">
           <button
-            onClick={handleSave}
-            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            disabled
+            title="Settings persistence is coming soon"
+            className="px-6 py-2.5 bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg font-medium cursor-not-allowed"
           >
-            {saved ? '✓ Saved' : 'Save Changes'}
+            Save Changes
           </button>
         </div>
       </div>

@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-import { createServerSupabaseClient } from '@/lib/supabase'
 import Link from 'next/link'
 import { Zap, LogOut, LayoutDashboard, Settings, Code2, Shield } from 'lucide-react'
 import { getCurrentUser } from '@/lib/auth'
@@ -9,16 +8,15 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createServerSupabaseClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  // getCurrentUser handles the session check internally — no need for a second client
+  const user = await getCurrentUser()
 
-  if (!session) {
+  if (!user) {
     redirect('/login')
   }
 
-  const user = await getCurrentUser()
-  const isAdmin = user?.subscription_tier === 'admin'
-  const isDeveloper = user?.subscription_tier === 'developer' || isAdmin
+  const isAdmin = user.subscription_tier === 'admin'
+  const isDeveloper = user.subscription_tier === 'developer' || isAdmin
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

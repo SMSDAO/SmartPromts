@@ -56,49 +56,34 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Protect admin routes - requires admin tier
-  if (request.nextUrl.pathname.startsWith('/admin')) {
+  // Protect admin and developer routes — single tier lookup shared by both checks
+  const isAdminPath = request.nextUrl.pathname.startsWith('/admin')
+  const isDeveloperPath = request.nextUrl.pathname.startsWith('/developer')
+
+  if (isAdminPath || isDeveloperPath) {
     if (!session) {
       const redirectUrl = new URL('/login', request.url)
       redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
       return NextResponse.redirect(redirectUrl)
     }
 
-    // Check if user has admin tier
-    const { data: user, error: adminQueryError } = await supabase
+    const { data: user, error: tierQueryError } = await supabase
       .from('users')
       .select('subscription_tier')
       .eq('id', session.user.id)
       .single()
 
-    if (adminQueryError) {
-      console.error('[middleware] admin tier lookup failed:', adminQueryError.message)
+    if (tierQueryError) {
+      console.error('[middleware] tier lookup failed:', tierQueryError.message)
     }
 
-    if (!user || user.subscription_tier !== 'admin') {
+    const tier = user?.subscription_tier
+
+    if (isAdminPath && tier !== 'admin') {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
-  }
 
-  // Protect developer routes - requires admin or developer tier
-  if (request.nextUrl.pathname.startsWith('/developer')) {
-    if (!session) {
-      const redirectUrl = new URL('/login', request.url)
-      redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
-      return NextResponse.redirect(redirectUrl)
-    }
-
-    const { data: user, error: devQueryError } = await supabase
-      .from('users')
-      .select('subscription_tier')
-      .eq('id', session.user.id)
-      .single()
-
-    if (devQueryError) {
-      console.error('[middleware] developer tier lookup failed:', devQueryError.message)
-    }
-
-    if (!user || (user.subscription_tier !== 'admin' && user.subscription_tier !== 'developer')) {
+    if (isDeveloperPath && tier !== 'admin' && tier !== 'developer') {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }

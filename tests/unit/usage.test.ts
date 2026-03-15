@@ -1,19 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { USAGE_LIMITS } from '../../lib/usage'
+import { USAGE_LIMITS, isAllowed, getRemainingUsage } from '../../lib/usage'
 import type { SubscriptionTier } from '../../lib/auth'
 
-// Pure helpers that mirror the production logic in lib/usage.ts
-function getRemainingUsage(tier: SubscriptionTier, usageCount: number): number {
-  const limit = USAGE_LIMITS[tier]
-  return limit === -1 ? -1 : limit - usageCount
-}
-
-function isAllowed(tier: SubscriptionTier, usageCount: number): boolean {
-  const limit = USAGE_LIMITS[tier]
-  return limit === -1 || usageCount < limit
-}
-
-describe('Usage limits (sourced from lib/usage.ts USAGE_LIMITS)', () => {
+describe('Usage limits (sourced from lib/usage.ts)', () => {
   it('free tier allows up to 10 uses', () => {
     expect(USAGE_LIMITS.free).toBe(10)
     expect(isAllowed('free', 9)).toBe(true)

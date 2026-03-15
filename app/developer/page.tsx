@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-import { createServerSupabaseClient } from '@/lib/supabase'
 import { getCurrentUser } from '@/lib/auth'
 import Link from 'next/link'
 import {
@@ -19,13 +18,7 @@ import {
 export const dynamic = 'force-dynamic'
 
 export default async function DeveloperPage() {
-  const supabase = await createServerSupabaseClient()
-  const { data: { session } } = await supabase.auth.getSession()
-
-  if (!session) {
-    redirect('/login?redirect=/developer')
-  }
-
+  // getCurrentUser handles the session check internally — no need for a second client
   const user = await getCurrentUser()
   if (!user || (user.subscription_tier !== 'admin' && user.subscription_tier !== 'developer')) {
     redirect('/dashboard')
