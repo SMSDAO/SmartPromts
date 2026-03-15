@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="80" fill="#0a0f1e"/>
+  <defs>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+    <filter id="blur">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Glow halo -->
+  <polygon points="256,80 296,220 440,220 328,308 368,448 256,360 144,448 184,308 72,220 216,220"
+    fill="#06b6d4" opacity="0.15" filter="url(#blur)"/>
+  <!-- Lightning bolt star -->
+  <polygon points="256,80 296,220 440,220 328,308 368,448 256,360 144,448 184,308 72,220 216,220"
+    fill="url(#glow)"/>
+</svg>

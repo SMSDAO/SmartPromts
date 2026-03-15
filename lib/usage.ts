@@ -2,12 +2,25 @@ import { createServerSupabaseClient } from './supabase'
 import type { SubscriptionTier } from './auth'
 
 // Usage limits per tier (monthly)
-const USAGE_LIMITS: Record<SubscriptionTier, number> = {
+export const USAGE_LIMITS: Record<SubscriptionTier, number> = {
   free: 10,
   pro: 1000,
   enterprise: -1, // unlimited
   lifetime: -1,   // unlimited
   admin: -1,      // unlimited
+  developer: -1,  // unlimited
+  auditor: 100,   // read-heavy role
+}
+
+// Pure helpers — no DB required, safe to use in tests and edge middleware
+export function isAllowed(tier: SubscriptionTier, usageCount: number): boolean {
+  const limit = USAGE_LIMITS[tier]
+  return limit === -1 || usageCount < limit
+}
+
+export function getRemainingUsage(tier: SubscriptionTier, usageCount: number): number {
+  const limit = USAGE_LIMITS[tier]
+  return limit === -1 ? -1 : limit - usageCount
 }
 
 export interface UsageCheckResult {

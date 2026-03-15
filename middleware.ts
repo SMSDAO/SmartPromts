@@ -56,22 +56,34 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Protect admin routes - requires admin tier
-  if (request.nextUrl.pathname.startsWith('/admin')) {
+  // Protect admin and developer routes — single tier lookup shared by both checks
+  const isAdminPath = request.nextUrl.pathname.startsWith('/admin')
+  const isDeveloperPath = request.nextUrl.pathname.startsWith('/developer')
+
+  if (isAdminPath || isDeveloperPath) {
     if (!session) {
       const redirectUrl = new URL('/login', request.url)
       redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
       return NextResponse.redirect(redirectUrl)
     }
 
-    // Check if user has admin tier
-    const { data: user } = await supabase
+    const { data: user, error: tierQueryError } = await supabase
       .from('users')
       .select('subscription_tier')
       .eq('id', session.user.id)
       .single()
 
-    if (!user || user.subscription_tier !== 'admin') {
+    if (tierQueryError) {
+      console.error('[middleware] tier lookup failed:', tierQueryError.message)
+    }
+
+    const tier = user?.subscription_tier
+
+    if (isAdminPath && tier !== 'admin') {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+
+    if (isDeveloperPath && tier !== 'admin' && tier !== 'developer') {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
@@ -85,5 +97,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin/:path*', '/login'],
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/developer/:path*', '/login'],
 }

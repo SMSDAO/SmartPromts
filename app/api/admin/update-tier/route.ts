@@ -4,7 +4,7 @@ import { z } from 'zod'
 
 const UpdateTierSchema = z.object({
   userId: z.string().uuid(),
-  tier: z.enum(['free', 'pro', 'enterprise', 'lifetime', 'admin']),
+  tier: z.enum(['free', 'pro', 'enterprise', 'lifetime', 'admin', 'developer', 'auditor']),
 })
 
 export async function POST(req: NextRequest) {

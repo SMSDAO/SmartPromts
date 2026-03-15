@@ -15,6 +15,8 @@ const TIER_LIMITS: Record<SubscriptionTier, number> = {
   lifetime: 60,
   enterprise: 120,
   admin: 300,
+  developer: 120,
+  auditor: 20,
 }
 
 /**

@@ -12,13 +12,19 @@ tests/
 
 ## Running Tests
 
-The CI workflow (`.github/workflows/test.yml`) runs `npm test --if-present`. Because there
-is currently no `test` script defined in `package.json`, the step is a no-op — it will not
-fail CI. Once a test runner is configured and a `test` script is added, the `--if-present`
-flag should be removed so CI enforces that all tests pass.
+```bash
+npm test              # run all tests once
+npm run test:watch    # watch mode
+npm run test:coverage # run with coverage report
+```
+
+The CI workflow (`.github/workflows/test.yml`) runs `npm test` and will fail if any tests fail.
+
 ## Adding Tests
 
 Test files follow the naming convention `*.test.ts` or `*.spec.ts`.
 
-- Unit tests: co-locate in `tests/unit/` mirroring the source structure.
+- Unit tests: place in `tests/unit/` mirroring the source structure.
 - Integration tests: place in `tests/integration/` with descriptive names.
+
+Tests use [Vitest](https://vitest.dev/) and can be run locally or in CI without any external services.
