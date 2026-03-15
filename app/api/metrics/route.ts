@@ -16,6 +16,7 @@ export async function GET() {
 
   const metrics = {
     timestamp: new Date().toISOString(),
+    version: process.env.npm_package_version ?? '1.0.0',
     runtime: {
       node_version: process.version,
       platform: process.platform,

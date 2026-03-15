@@ -1,46 +1,54 @@
 import { describe, expect, it } from 'vitest'
+import { GET } from '../../app/api/health/route'
+import type { SubscriptionTier } from '../../lib/auth'
+import { USAGE_LIMITS } from '../../lib/usage'
 
-describe('Health check API response shape', () => {
-  it('health response has required fields', () => {
-    // Simulate what the health endpoint returns
-    const healthResponse = {
-      status: 'ok',
-      version: '1.0.0',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      environment: 'test',
-      services: {
-        app: 'ok',
-        supabase: 'not_configured',
-        openai: 'not_configured',
-        stripe: 'not_configured',
-        redis: 'not_configured',
-      },
-      latency_ms: 0,
-    }
+describe('GET /api/health', () => {
+  it('returns 200 with required fields', async () => {
+    const response = await GET()
+    expect(response.status).toBe(200)
 
-    expect(healthResponse.status).toBe('ok')
-    expect(healthResponse.version).toBe('1.0.0')
-    expect(typeof healthResponse.uptime).toBe('number')
-    expect(healthResponse.services).toHaveProperty('app')
-    expect(healthResponse.services).toHaveProperty('supabase')
-    expect(healthResponse.services).toHaveProperty('openai')
-    expect(healthResponse.services).toHaveProperty('stripe')
-    expect(healthResponse.services).toHaveProperty('redis')
+    const body = await response.json() as Record<string, unknown>
+    expect(body.status).toBe('ok')
+    expect(typeof body.version).toBe('string')
+    expect(typeof body.timestamp).toBe('string')
+    expect(typeof body.latency_ms).toBe('number')
+  })
+
+  it('does not expose internal service configuration', async () => {
+    const response = await GET()
+    const body = await response.json() as Record<string, unknown>
+
+    // Public health endpoint must not leak which services are/aren't configured
+    expect(body).not.toHaveProperty('services')
+    expect(body).not.toHaveProperty('environment')
+    expect(body).not.toHaveProperty('uptime')
+  })
+
+  it('response Content-Type is application/json', async () => {
+    const response = await GET()
+    expect(response.headers.get('content-type')).toContain('application/json')
   })
 })
 
-describe('Subscription tiers', () => {
-  it('all required tiers are defined', () => {
-    const validTiers = ['free', 'pro', 'enterprise', 'lifetime', 'admin', 'developer', 'auditor']
-    for (const tier of validTiers) {
-      expect(typeof tier).toBe('string')
+describe('SubscriptionTier completeness', () => {
+  it('all 7 tiers are present in USAGE_LIMITS', () => {
+    const expectedTiers: SubscriptionTier[] = [
+      'free', 'pro', 'enterprise', 'lifetime', 'admin', 'developer', 'auditor',
+    ]
+    for (const tier of expectedTiers) {
+      expect(USAGE_LIMITS).toHaveProperty(tier)
+      expect(typeof USAGE_LIMITS[tier]).toBe('number')
     }
   })
 
-  it('admin-only tier list includes developer and auditor', () => {
-    const adminTiers = ['free', 'pro', 'enterprise', 'lifetime', 'developer', 'auditor', 'admin']
-    expect(adminTiers).toContain('developer')
-    expect(adminTiers).toContain('auditor')
+  it('developer tier is unlimited', () => {
+    expect(USAGE_LIMITS.developer).toBe(-1)
+  })
+
+  it('auditor tier limit is less than enterprise', () => {
+    // auditor is a limited role; enterprise is unlimited (-1)
+    expect(USAGE_LIMITS.auditor).toBeGreaterThan(0)
+    expect(USAGE_LIMITS.enterprise).toBe(-1)
   })
 })

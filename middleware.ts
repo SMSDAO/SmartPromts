@@ -65,11 +65,15 @@ export async function middleware(request: NextRequest) {
     }
 
     // Check if user has admin tier
-    const { data: user } = await supabase
+    const { data: user, error: adminQueryError } = await supabase
       .from('users')
       .select('subscription_tier')
       .eq('id', session.user.id)
       .single()
+
+    if (adminQueryError) {
+      console.error('[middleware] admin tier lookup failed:', adminQueryError.message)
+    }
 
     if (!user || user.subscription_tier !== 'admin') {
       return NextResponse.redirect(new URL('/dashboard', request.url))
@@ -84,11 +88,15 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(redirectUrl)
     }
 
-    const { data: user } = await supabase
+    const { data: user, error: devQueryError } = await supabase
       .from('users')
       .select('subscription_tier')
       .eq('id', session.user.id)
       .single()
+
+    if (devQueryError) {
+      console.error('[middleware] developer tier lookup failed:', devQueryError.message)
+    }
 
     if (!user || (user.subscription_tier !== 'admin' && user.subscription_tier !== 'developer')) {
       return NextResponse.redirect(new URL('/dashboard', request.url))

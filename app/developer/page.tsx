@@ -258,7 +258,7 @@ export default async function DeveloperPage() {
             {[
               { label: 'Health Check', href: '/api/health', desc: 'Service status JSON' },
               { label: 'Metrics', href: '/api/metrics', desc: 'Runtime metrics JSON' },
-              { label: 'API Docs', href: '/docs', desc: 'Full API documentation' },
+              { label: 'API Docs', href: 'https://github.com/SMSDAO/SmartPromts/tree/main/docs', desc: 'Full API documentation' },
             ].map(({ label, href, desc }) => (
               <a
                 key={href}

@@ -2,7 +2,7 @@ import { createServerSupabaseClient } from './supabase'
 import type { SubscriptionTier } from './auth'
 
 // Usage limits per tier (monthly)
-const USAGE_LIMITS: Record<SubscriptionTier, number> = {
+export const USAGE_LIMITS: Record<SubscriptionTier, number> = {
   free: 10,
   pro: 1000,
   enterprise: -1, // unlimited

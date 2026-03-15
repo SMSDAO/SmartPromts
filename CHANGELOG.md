@@ -18,15 +18,25 @@ First stable production release of SmartPromts — an enterprise-grade AI prompt
 #### Core Application
 - AI prompt optimization API supporting GPT-4, GPT-3.5-Turbo, Claude, and Gemini
 - Magic-link (passwordless) authentication via Supabase
-- Tier-based access control: Free (10/mo), Pro (1,000/mo), Enterprise/Lifetime/Admin (unlimited)
+- Tier-based access control across 7 subscription tiers (see RBAC section below)
 - Atomic usage tracking with race-condition-safe PostgreSQL RPC
 - Rate limiting via Upstash Redis
 
 #### Enterprise Access Control (RBAC)
-- Four role tiers: Admin, Developer, Auditor, User
-- `developer` role: unlimited usage + access to Developer Dashboard and API metrics
-- `auditor` role: 100 uses/month, read-access to audit-relevant endpoints
+Seven subscription tiers regulate usage limits, rate limits, and route access:
+
+| Tier | Monthly usage | Rate limit (req/min) | Notes |
+|------|--------------|----------------------|-------|
+| `free` | 10 | 5 | Default for new sign-ups |
+| `pro` | 1,000 | 30 | Stripe subscription |
+| `enterprise` | Unlimited | 120 | Stripe subscription |
+| `lifetime` | Unlimited | 60 | NFT Lifetime Pass holders |
+| `developer` | Unlimited | 120 | Access to `/developer` dashboard and `/api/metrics` |
+| `auditor` | 100 | 20 | Read-oriented role |
+| `admin` | Unlimited | 300 | Full platform access + Admin Dashboard |
+
 - Route-level protection via Next.js middleware for `/dashboard`, `/admin`, and `/developer`
+- Admin panel exposes all 7 tiers for assignment to any user
 
 #### Navigation & UI
 - Tab-based navigation in Dashboard layout (Dashboard, Settings, Developer, Admin, Pricing)
