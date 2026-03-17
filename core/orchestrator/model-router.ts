@@ -13,13 +13,15 @@ export function selectModel(strategy: RoutingStrategy, candidates: ModelInfo[]):
     case 'highest_accuracy':
       return candidates.reduce((best, m) => m.accuracy_score > best.accuracy_score ? m : best)
     case 'best_score': {
-      // Composite: normalise each metric and sum
+      // Composite: normalise each metric and sum.
+      // Normalization anchors are clamped to [0,1] so models exceeding GPT-4
+      // baselines (cost=0.00003, latency=3000ms) are penalised but don't go negative.
       const scored = candidates.map(m => ({
         model: m,
         score:
           m.accuracy_score * 0.5 +
-          (1 - m.cost_per_token / 0.00003) * 0.3 +
-          (1 - m.latency_estimate / 3000) * 0.2,
+          Math.max(0, 1 - m.cost_per_token / 0.00003) * 0.3 +
+          Math.max(0, 1 - m.latency_estimate / 3000) * 0.2,
       }))
       return scored.reduce((best, s) => s.score > best.score ? s : best).model
     }

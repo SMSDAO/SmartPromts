@@ -21,6 +21,10 @@ const builtinTools: Tool[] = [
     name: 'codeInterpreter',
     description: 'Execute code snippets and return results',
     execute: async (input) => {
+      // WARNING: new Function() executes arbitrary code. This tool must only
+      // be used in trusted, server-side contexts with validated input.
+      // Do NOT expose this tool to untrusted user-supplied strings without
+      // additional sandboxing (e.g. a VM or worker process).
       try {
         const fn = new Function(`"use strict"; return (${input})`)
         const result = fn()

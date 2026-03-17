@@ -9,8 +9,11 @@ export function crossover(a: PromptVariant, b: PromptVariant): PromptVariant {
   const sentencesB = b.prompt.split(/\.\s+/)
   const mid = Math.floor(Math.min(sentencesA.length, sentencesB.length) / 2)
   const combined = [...sentencesA.slice(0, mid), ...sentencesB.slice(mid)].join('. ').trim()
+  const id = typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID().replace(/-/g, '').substring(0, 9)
+    : Math.random().toString(36).substring(2, 11)
   return {
-    id: Math.random().toString(36).substring(2, 11),
+    id,
     prompt: combined || a.prompt,
     score: (a.score + b.score) / 2,
     technique: 'crossover',

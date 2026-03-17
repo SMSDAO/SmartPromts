@@ -26,7 +26,10 @@ export function calculateStatisticalSignificance(a: number[], b: number[]): numb
   const se = Math.sqrt(varA / a.length + varB / b.length)
   if (se === 0) return meanA === meanB ? 1 : 0
   const t = Math.abs(meanA - meanB) / se
-  // Approximate p-value from t-statistic (rough sigmoid)
+  // Simplified p-value approximation using a sigmoid on the t-statistic.
+  // This is NOT a rigorous statistical test (e.g. Welch's t-test) and should
+  // only be used for rough guidance, not for formal significance testing.
+  // The constant 0.3 was chosen empirically so that t≈3 yields p≈0.1.
   return Math.max(0, Math.min(1, 1 / (1 + t * 0.3)))
 }
 
