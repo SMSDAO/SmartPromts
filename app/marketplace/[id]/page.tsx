@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { use } from 'react'
 import { Store, Star, Download, Tag, ShoppingCart, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
@@ -20,8 +19,8 @@ interface MarketplacePrompt {
   created_at: string
 }
 
-export default function MarketplaceDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function MarketplaceDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params
   const [prompt, setPrompt] = useState<MarketplacePrompt | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
