@@ -6,6 +6,29 @@ export interface Tool {
 
 const toolRegistry = new Map<string, Tool>()
 
+const ENABLE_UNSAFE_CODE_INTERPRETER =
+  typeof process !== 'undefined' &&
+  typeof process.env !== 'undefined' &&
+  process.env.ENABLE_UNSAFE_CODE_INTERPRETER === 'true'
+
+const codeInterpreterTool: Tool = {
+  name: 'codeInterpreter',
+  description: 'Execute code snippets and return results',
+  execute: async (input) => {
+    // WARNING: new Function() executes arbitrary code. This tool must only
+    // be used in trusted, server-side contexts with validated input.
+    // Do NOT expose this tool to untrusted user-supplied strings without
+    // additional sandboxing (e.g. a VM or worker process).
+    try {
+      const fn = new Function(`"use strict"; return (${input})`)
+      const result = fn()
+      return String(result)
+    } catch (e) {
+      return `Error executing code: ${e instanceof Error ? e.message : String(e)}`
+    }
+  },
+}
+
 const builtinTools: Tool[] = [
   {
     name: 'webSearch',
@@ -17,23 +40,7 @@ const builtinTools: Tool[] = [
     description: 'Query the database for structured data',
     execute: async (input) => `[DB query: ${input}] - Returns structured data from the database.`,
   },
-  {
-    name: 'codeInterpreter',
-    description: 'Execute code snippets and return results',
-    execute: async (input) => {
-      // WARNING: new Function() executes arbitrary code. This tool must only
-      // be used in trusted, server-side contexts with validated input.
-      // Do NOT expose this tool to untrusted user-supplied strings without
-      // additional sandboxing (e.g. a VM or worker process).
-      try {
-        const fn = new Function(`"use strict"; return (${input})`)
-        const result = fn()
-        return String(result)
-      } catch (e) {
-        return `Error executing code: ${e instanceof Error ? e.message : String(e)}`
-      }
-    },
-  },
+  ...(ENABLE_UNSAFE_CODE_INTERPRETER ? [codeInterpreterTool] : []),
   {
     name: 'fileReader',
     description: 'Read file contents',
