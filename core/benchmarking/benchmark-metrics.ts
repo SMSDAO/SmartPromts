@@ -20,12 +20,12 @@ export function calculateSemanticSimilarity(a: string, b: string): number {
 }
 
 export function calculateHallucinationRisk(expected: string, actual: string): number {
-  if (!expected || !actual) return 1
+  if (!expected || !actual) return 0
   const expWords = new Set(expected.toLowerCase().split(/\s+/))
   const actWords = actual.toLowerCase().split(/\s+/)
   const hallucinated = actWords.filter(w => !expWords.has(w)).length
   const total = actWords.length
-  return total === 0 ? 0 : 1 - hallucinated / total
+  return total === 0 ? 0 : hallucinated / total
 }
 
 export interface SingleBenchmarkResult {
