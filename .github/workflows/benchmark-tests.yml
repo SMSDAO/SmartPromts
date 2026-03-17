@@ -1,0 +1,35 @@
+name: Benchmark Module Tests
+
+on:
+  push:
+    paths:
+      - 'core/benchmarking/**'
+      - 'tests/unit/benchmarking.test.ts'
+  pull_request:
+    paths:
+      - 'core/benchmarking/**'
+      - 'tests/unit/benchmarking.test.ts'
+
+jobs:
+  benchmark-tests:
+    name: Run Benchmark Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run benchmark tests
+        run: npx vitest run tests/unit/benchmarking.test.ts
+
+      - name: Run marketplace tests (pricing/licensing)
+        run: npx vitest run tests/unit/marketplace.test.ts
