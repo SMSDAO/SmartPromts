@@ -55,6 +55,10 @@ export function buildDefaultGraph(): AgentGraph {
           general: 'dbQuery',
         }
         const toolName = toolMap[intent] ?? 'dbQuery'
+        const isAllowed = !context.tools || context.tools.includes(toolName)
+        if (!isAllowed) {
+          return input
+        }
         const tool = getTool(toolName)
         if (tool) {
           const result = await tool.execute(input.replace(/\[intent:\w+\]\s*/, ''))
