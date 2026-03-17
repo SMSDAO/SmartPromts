@@ -1,0 +1,41 @@
+name: Agent Module Tests
+
+on:
+  push:
+    paths:
+      - 'core/agents/**'
+      - 'core/orchestrator/**'
+      - 'core/tuning/**'
+      - 'tests/unit/orchestrator.test.ts'
+      - 'tests/unit/tuning.test.ts'
+  pull_request:
+    paths:
+      - 'core/agents/**'
+      - 'core/orchestrator/**'
+      - 'core/tuning/**'
+      - 'tests/unit/orchestrator.test.ts'
+      - 'tests/unit/tuning.test.ts'
+
+jobs:
+  agent-tests:
+    name: Run Agent & Orchestrator Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run orchestrator tests
+        run: npx vitest run tests/unit/orchestrator.test.ts
+
+      - name: Run tuning tests
+        run: npx vitest run tests/unit/tuning.test.ts
