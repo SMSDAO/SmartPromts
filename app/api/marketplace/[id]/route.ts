@@ -8,7 +8,7 @@ const UpdateListingSchema = z.object({
   description: z.string().max(2000).optional(),
   prompt: z.string().min(1).max(10000).optional(),
   category: z.string().optional(),
-  price: z.number().min(0).optional(),
+  price: z.number().min(0).max(10000).optional(),
   tags: z.array(z.string()).optional(),
   license: z.string().optional(),
 })
