@@ -25,7 +25,7 @@ export function calculateHallucinationRisk(expected: string, actual: string): nu
   const actWords = actual.toLowerCase().split(/\s+/)
   const hallucinated = actWords.filter(w => !expWords.has(w)).length
   const total = actWords.length
-  return total === 0 ? 0 : hallucinated / total
+  return total === 0 ? 0 : 1 - hallucinated / total
 }
 
 export interface SingleBenchmarkResult {
