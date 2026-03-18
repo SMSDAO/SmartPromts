@@ -9,8 +9,6 @@ export const Ratelimit = vi.fn().mockImplementation(() => ({
   }),
 }))
 
-export const checkRateLimit = vi.fn().mockResolvedValue({
-  allowed: true,
-  remaining: 9,
-  resetAt: new Date(Date.now() + 60000),
-})
+// Static helper used by some Ratelimit configs
+Ratelimit.slidingWindow = vi.fn().mockReturnValue({})
+Ratelimit.fixedWindow = vi.fn().mockReturnValue({})

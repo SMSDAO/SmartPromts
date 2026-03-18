@@ -1,10 +1,5 @@
 import { vi } from 'vitest'
 
-const mockSession = {
-  user: { id: 'test-user-id', email: 'test@example.com' },
-  access_token: 'test-token',
-}
-
 const mockUser = {
   id: 'test-user-id',
   email: 'test@example.com',
@@ -18,8 +13,8 @@ const mockUser = {
 
 export const createClient = vi.fn(() => ({
   auth: {
-    getSession: vi.fn().mockResolvedValue({ data: { session: mockSession }, error: null }),
-    getUser: vi.fn().mockResolvedValue({ data: { user: mockSession.user }, error: null }),
+    getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+    getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
     signOut: vi.fn().mockResolvedValue({ error: null }),
   },
   from: vi.fn(() => ({
@@ -30,10 +25,6 @@ export const createClient = vi.fn(() => ({
     delete: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data: mockUser, error: null }),
-    rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
   })),
   rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
 }))
-
-export const createServerClient = vi.fn(() => createClient())
-export const createBrowserClient = vi.fn(() => createClient())

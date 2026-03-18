@@ -2,12 +2,6 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  // TEST_MODE bypass: skip all auth/rate-limiting to allow CI pipelines to pass.
-  // This is only honoured outside production to prevent accidental exposure.
-  if (process.env.TEST_MODE === 'true' && process.env.NODE_ENV !== 'production') {
-    return NextResponse.next()
-  }
-
   const response = NextResponse.next({
     request: {
       headers: request.headers,

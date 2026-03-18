@@ -19,7 +19,7 @@ export function calculateSemanticSimilarity(a: string, b: string): number {
   return union === 0 ? 0 : intersection / union
 }
 
-export function calculateHallucinationRisk(expected: string, actual: string): number {
+export function calculateGroundednessScore(expected: string, actual: string): number {
   if (!expected || !actual) return 0
   const expWords = new Set(expected.toLowerCase().split(/\s+/))
   const actWords = actual.toLowerCase().split(/\s+/)
