@@ -19,13 +19,13 @@ export function calculateSemanticSimilarity(a: string, b: string): number {
   return union === 0 ? 0 : intersection / union
 }
 
-export function calculateHallucinationRisk(expected: string, actual: string): number {
+export function calculateGroundednessScore(expected: string, actual: string): number {
   if (!expected || !actual) return 0
-  const expWords = new Set(expected.toLowerCase().split(/\s+/))
-  const actWords = actual.toLowerCase().split(/\s+/)
+  const expWords = new Set(expected.trim().toLowerCase().split(/\s+/).filter(Boolean))
+  const actWords = actual.trim().toLowerCase().split(/\s+/).filter(Boolean)
   const hallucinated = actWords.filter(w => !expWords.has(w)).length
   const total = actWords.length
-  return total === 0 ? 0 : hallucinated / total
+  return total === 0 ? 0 : 1 - hallucinated / total
 }
 
 export interface SingleBenchmarkResult {

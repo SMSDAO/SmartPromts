@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   calculateAccuracy,
   calculateSemanticSimilarity,
-  calculateHallucinationRisk,
+  calculateGroundednessScore,
   calculateBenchmarkScore,
 } from '../../core/benchmarking/benchmark-metrics'
 
@@ -51,20 +51,25 @@ describe('calculateSemanticSimilarity', () => {
   })
 })
 
-describe('calculateHallucinationRisk', () => {
+describe('calculateGroundednessScore', () => {
   it('returns 1 when actual matches expected exactly', () => {
-    expect(calculateHallucinationRisk('cat dog', 'cat dog')).toBe(1)
+    expect(calculateGroundednessScore('cat dog', 'cat dog')).toBe(1)
   })
 
   it('returns 0 for completely hallucinated content', () => {
-    const score = calculateHallucinationRisk('cat dog', 'elephant tiger')
+    const score = calculateGroundednessScore('cat dog', 'elephant tiger')
     expect(score).toBe(0)
   })
 
   it('returns partial score for partially hallucinated content', () => {
-    const score = calculateHallucinationRisk('cat dog', 'cat elephant')
+    const score = calculateGroundednessScore('cat dog', 'cat elephant')
     expect(score).toBeGreaterThan(0)
     expect(score).toBeLessThan(1)
+  })
+
+  it('is stable under leading, trailing, and multiple spaces', () => {
+    expect(calculateGroundednessScore('  cat  dog  ', '  cat  dog  ')).toBe(1)
+    expect(calculateGroundednessScore('cat dog', '  cat   dog  ')).toBe(1)
   })
 })
 
