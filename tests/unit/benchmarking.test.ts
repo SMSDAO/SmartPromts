@@ -66,6 +66,11 @@ describe('calculateGroundednessScore', () => {
     expect(score).toBeGreaterThan(0)
     expect(score).toBeLessThan(1)
   })
+
+  it('is stable under leading, trailing, and multiple spaces', () => {
+    expect(calculateGroundednessScore('  cat  dog  ', '  cat  dog  ')).toBe(1)
+    expect(calculateGroundednessScore('cat dog', '  cat   dog  ')).toBe(1)
+  })
 })
 
 describe('calculateBenchmarkScore', () => {
