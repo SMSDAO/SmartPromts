@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 
-export const Ratelimit = vi.fn().mockImplementation(() => ({
+const RatelimitMock = vi.fn().mockImplementation(() => ({
   limit: vi.fn().mockResolvedValue({
     success: true,
     limit: 10,
@@ -9,6 +9,8 @@ export const Ratelimit = vi.fn().mockImplementation(() => ({
   }),
 }))
 
-// Static helper used by some Ratelimit configs
-Ratelimit.slidingWindow = vi.fn().mockReturnValue({})
-Ratelimit.fixedWindow = vi.fn().mockReturnValue({})
+// Attach static factory methods used by Ratelimit algorithm configs
+export const Ratelimit = Object.assign(RatelimitMock, {
+  slidingWindow: vi.fn().mockReturnValue({}),
+  fixedWindow: vi.fn().mockReturnValue({}),
+})
