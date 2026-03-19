@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getRole, hasRole } from '../../lib/rbac'
 import type { RbacUser } from '../../lib/rbac'
 import type { SubscriptionTier } from '../../lib/auth'
@@ -139,5 +139,162 @@ describe('role hierarchy', () => {
     for (const tier of tiers) {
       expect(hasRole(makeUser(tier), ['user'])).toBe(true)
     }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// enforceRole – via lib/supabase mock
+// ---------------------------------------------------------------------------
+
+// Mock lib/supabase so enforceRole never calls cookies() (no Next.js context)
+vi.mock('../../lib/supabase', () => {
+  const makeDbChain = (resolvedValue: unknown) => ({
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue(resolvedValue),
+  })
+
+  return {
+    createServerSupabaseClient: vi.fn().mockResolvedValue({
+      auth: {
+        getSession: vi.fn().mockResolvedValue({
+          data: { session: { user: { id: 'user-abc' } } },
+          error: null,
+        }),
+      },
+    }),
+    createAdminClient: vi.fn(() => ({
+      from: vi.fn(() =>
+        makeDbChain({ data: { id: 'user-abc', subscription_tier: 'free' }, error: null }),
+      ),
+    })),
+  }
+})
+
+describe('enforceRole', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('returns 401 when there is no active session', async () => {
+    const { createServerSupabaseClient } = await import('../../lib/supabase')
+    vi.mocked(createServerSupabaseClient).mockResolvedValueOnce({
+      auth: {
+        getSession: vi.fn().mockResolvedValue({
+          data: { session: null },
+          error: null,
+        }),
+      },
+    } as any)
+
+    const { enforceRole } = await import('../../lib/rbac')
+    const handler = vi.fn()
+    const protected_ = enforceRole(handler, ['admin'])
+
+    const res = await protected_({ url: 'http://localhost/' } as any)
+    expect(res.status).toBe(401)
+    expect(handler).not.toHaveBeenCalled()
+  })
+
+  it('returns 403 when the user lacks the required role', async () => {
+    // Session present, but DB returns a free-tier user
+    const { createServerSupabaseClient, createAdminClient } = await import('../../lib/supabase')
+
+    vi.mocked(createServerSupabaseClient).mockResolvedValueOnce({
+      auth: {
+        getSession: vi.fn().mockResolvedValue({
+          data: { session: { user: { id: 'user-abc' } } },
+          error: null,
+        }),
+      },
+    } as any)
+
+    vi.mocked(createAdminClient).mockReturnValueOnce({
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: { id: 'user-abc', subscription_tier: 'free' },
+          error: null,
+        }),
+      })),
+    } as any)
+
+    const { enforceRole } = await import('../../lib/rbac')
+    const handler = vi.fn()
+    const protected_ = enforceRole(handler, ['admin'])
+
+    const res = await protected_({ url: 'http://localhost/' } as any)
+    expect(res.status).toBe(403)
+    expect(handler).not.toHaveBeenCalled()
+  })
+
+  it('calls handler with the user when role check passes', async () => {
+    const { createServerSupabaseClient, createAdminClient } = await import('../../lib/supabase')
+
+    vi.mocked(createServerSupabaseClient).mockResolvedValueOnce({
+      auth: {
+        getSession: vi.fn().mockResolvedValue({
+          data: { session: { user: { id: 'admin-abc' } } },
+          error: null,
+        }),
+      },
+    } as any)
+
+    vi.mocked(createAdminClient).mockReturnValueOnce({
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: { id: 'admin-abc', subscription_tier: 'admin' },
+          error: null,
+        }),
+      })),
+    } as any)
+
+    const { enforceRole } = await import('../../lib/rbac')
+    const { NextResponse } = await import('next/server')
+    const handler = vi.fn().mockResolvedValue(NextResponse.json({ ok: true }))
+    const protected_ = enforceRole(handler, ['admin'])
+
+    const res = await protected_({ url: 'http://localhost/' } as any)
+    expect(res.status).toBe(200)
+    expect(handler).toHaveBeenCalledOnce()
+    expect(handler).toHaveBeenCalledWith(
+      expect.anything(),
+      { id: 'admin-abc', subscription_tier: 'admin' },
+    )
+  })
+
+  it('returns 500 when a DB infrastructure error occurs (not missing row)', async () => {
+    const { createServerSupabaseClient, createAdminClient } = await import('../../lib/supabase')
+
+    vi.mocked(createServerSupabaseClient).mockResolvedValueOnce({
+      auth: {
+        getSession: vi.fn().mockResolvedValue({
+          data: { session: { user: { id: 'user-xyz' } } },
+          error: null,
+        }),
+      },
+    } as any)
+
+    vi.mocked(createAdminClient).mockReturnValueOnce({
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'DB connection timeout', code: '500' },
+        }),
+      })),
+    } as any)
+
+    const { enforceRole } = await import('../../lib/rbac')
+    const handler = vi.fn()
+    const protected_ = enforceRole(handler, ['admin'])
+
+    const res = await protected_({ url: 'http://localhost/' } as any)
+    expect(res.status).toBe(500)
+    expect(handler).not.toHaveBeenCalled()
   })
 })

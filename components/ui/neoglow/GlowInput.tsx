@@ -1,4 +1,4 @@
-import { type InputHTMLAttributes, forwardRef } from 'react'
+import { type InputHTMLAttributes, forwardRef, useId } from 'react'
 import { clsx } from 'clsx'
 
 interface GlowInputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -18,7 +18,10 @@ const variantFocus: Record<NonNullable<GlowInputProps['variant']>, string> = {
  */
 export const GlowInput = forwardRef<HTMLInputElement, GlowInputProps>(
   function GlowInput({ label, error, variant = 'blue', className, id, ...props }, ref) {
-    const inputId = id ?? (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined)
+    // useId generates a stable, unique ID per component instance, preventing
+    // duplicate id collisions when the same label text is used multiple times.
+    const generatedId = useId()
+    const inputId = id ?? (label ? generatedId : undefined)
 
     return (
       <div className="flex flex-col gap-1.5">

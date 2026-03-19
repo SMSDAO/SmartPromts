@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Shield, Users, BarChart3, CreditCard, Bot, ScrollText, Zap } from 'lucide-react'
+import { Shield, Users, BarChart3, CreditCard, Bot, ScrollText, Zap, LogOut } from 'lucide-react'
 import { getCurrentUser } from '@/lib/auth'
 import { hasRole } from '@/lib/rbac'
 import { AnimatedBackground } from '@/components/ui/neoglow'
@@ -22,8 +22,6 @@ export default async function AdminLayout({
 
   const navItems = [
     { href: '/admin', label: 'Users', icon: Users },
-    { href: '/analytics', label: 'Analytics', icon: BarChart3 },
-    { href: '/agents', label: 'Agents', icon: Bot },
     { href: '/dashboard', label: 'Overview', icon: BarChart3 },
     { href: '/dashboard/settings', label: 'Settings', icon: CreditCard },
   ]
@@ -69,14 +67,30 @@ export default async function AdminLayout({
                 <ScrollText className="h-4 w-4" />
                 Dev Console
               </Link>
+              <Link
+                href="/agents"
+                className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-gray-400 transition-all hover:bg-purple-500/10 hover:text-purple-300"
+              >
+                <Bot className="h-4 w-4" />
+                Agents
+              </Link>
             </div>
           </nav>
 
-          <div className="border-t border-purple-500/20 px-4 py-4">
+          <div className="border-t border-purple-500/20 px-4 py-4 space-y-3">
             <div className="rounded-xl bg-purple-500/10 px-3 py-3">
               <p className="text-xs font-semibold text-purple-300">Signed in as admin</p>
               <p className="mt-0.5 truncate text-xs text-gray-400">{user.email}</p>
             </div>
+            <form action="/api/auth/signout" method="post">
+              <button
+                type="submit"
+                className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-gray-400 transition-all hover:bg-red-500/10 hover:text-red-400"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </button>
+            </form>
           </div>
         </div>
       </aside>

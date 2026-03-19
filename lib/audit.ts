@@ -87,19 +87,22 @@ export async function logAuditEvent(event: AuditEvent): Promise<void> {
 /**
  * Retrieve paginated audit logs (admin only – caller must enforce RBAC).
  *
- * @param limit  - Maximum number of records to return (default 50)
+ * @param limit  - Maximum number of records to return (default 50, capped at 500)
  * @param before - ISO timestamp cursor for pagination
  */
 export async function getAuditLogs(
   limit = 50,
   before?: string,
 ): Promise<AuditLog[]> {
+  const MAX_LIMIT = 500
+  const clampedLimit = Math.min(Math.max(1, limit), MAX_LIMIT)
+
   const supabase = createAdminClient()
   let query = supabase
     .from('audit_logs')
     .select('*')
     .order('created_at', { ascending: false })
-    .limit(limit)
+    .limit(clampedLimit)
 
   if (before) {
     query = query.lt('created_at', before)

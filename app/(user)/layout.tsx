@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { LayoutDashboard, Settings, ShoppingBag, Zap, BookMarked } from 'lucide-react'
+import { LayoutDashboard, Settings, ShoppingBag, Zap, BookMarked, LogOut } from 'lucide-react'
 import { getCurrentUser } from '@/lib/auth'
 import { AnimatedBackground } from '@/components/ui/neoglow'
 
@@ -53,11 +53,20 @@ export default async function UserLayout({
             ))}
           </nav>
 
-          <div className="border-t border-blue-500/20 px-4 py-4">
+          <div className="border-t border-blue-500/20 px-4 py-4 space-y-3">
             <div className="rounded-xl bg-blue-500/10 px-3 py-3">
               <p className="text-xs font-semibold capitalize text-blue-300">{user.subscription_tier} plan</p>
               <p className="mt-0.5 truncate text-xs text-gray-400">{user.email}</p>
             </div>
+            <form action="/api/auth/signout" method="post">
+              <button
+                type="submit"
+                className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-gray-400 transition-all hover:bg-red-500/10 hover:text-red-400"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </button>
+            </form>
           </div>
         </div>
       </aside>

@@ -59,15 +59,15 @@ export function hasRole(user: RbacUser, roles: Role[]): boolean {
  *   export const POST = enforceRole(handler, ['admin', 'developer'])
  *
  * The inner handler receives the request and the resolved user object.
+ * Accepts handlers that return either NextResponse or the native Response.
  */
 export function enforceRole(
-  handler: (req: NextRequest, user: RbacUser) => Promise<NextResponse>,
+  handler: (req: NextRequest, user: RbacUser) => Promise<Response | NextResponse>,
   roles: Role[],
-): (req: NextRequest) => Promise<NextResponse> {
-  return async (req: NextRequest): Promise<NextResponse> => {
-    // Inline session + DB lookup to avoid circular imports
-    const { createServerSupabaseClient } = await import('./supabase')
-    const { createAdminClient } = await import('./supabase')
+): (req: NextRequest) => Promise<NextResponse | Response> {
+  return async (req: NextRequest): Promise<NextResponse | Response> => {
+    // Single dynamic import to avoid redundant module loads
+    const { createServerSupabaseClient, createAdminClient } = await import('./supabase')
 
     const supabase = await createServerSupabaseClient()
     const {
@@ -86,7 +86,15 @@ export function enforceRole(
       .eq('id', session.user.id)
       .single()
 
-    if (error || !user) {
+    if (error) {
+      // Distinguish "user row missing" from infrastructure errors
+      if ((error as { code?: string }).code === 'PGRST116') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    }
+
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -107,7 +115,7 @@ export function enforceRole(
  */
 export function withRole(roles: Role[]) {
   return function wrap(
-    handler: (req: NextRequest, user: RbacUser) => Promise<NextResponse>,
+    handler: (req: NextRequest, user: RbacUser) => Promise<Response | NextResponse>,
   ) {
     return enforceRole(handler, roles)
   }

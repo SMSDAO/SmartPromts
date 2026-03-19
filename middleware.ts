@@ -59,8 +59,13 @@ export async function middleware(request: NextRequest) {
   // Protect admin and developer routes — single tier lookup shared by both checks
   const isAdminPath = request.nextUrl.pathname.startsWith('/admin')
   const isDeveloperPath = request.nextUrl.pathname.startsWith('/developer')
+  const isDevToolPath =
+    request.nextUrl.pathname.startsWith('/benchmarks') ||
+    request.nextUrl.pathname.startsWith('/experiments') ||
+    request.nextUrl.pathname.startsWith('/tuning') ||
+    request.nextUrl.pathname.startsWith('/agents')
 
-  if (isAdminPath || isDeveloperPath) {
+  if (isAdminPath || isDeveloperPath || isDevToolPath) {
     if (!session) {
       const redirectUrl = new URL('/login', request.url)
       redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
@@ -84,7 +89,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
-    if (isDeveloperPath && tier !== 'admin' && tier !== 'developer') {
+    if ((isDeveloperPath || isDevToolPath) && tier !== 'admin' && tier !== 'developer') {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
@@ -98,5 +103,14 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin/:path*', '/developer/:path*', '/login'],
+  matcher: [
+    '/dashboard/:path*',
+    '/admin/:path*',
+    '/developer/:path*',
+    '/benchmarks/:path*',
+    '/experiments/:path*',
+    '/tuning/:path*',
+    '/agents/:path*',
+    '/login',
+  ],
 }
