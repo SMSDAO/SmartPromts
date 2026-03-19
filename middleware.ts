@@ -75,6 +75,7 @@ export async function middleware(request: NextRequest) {
 
     if (tierQueryError) {
       console.error('[middleware] tier lookup failed:', tierQueryError.message)
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
     const tier = user?.subscription_tier
