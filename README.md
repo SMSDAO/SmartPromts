@@ -54,7 +54,7 @@ See [docs/rbac.md](docs/rbac.md) for full architecture documentation.
 
 ## 📋 Tech Stack
 
-- **Framework**: Next.js 14 with App Router
+- **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Database & Auth**: Supabase

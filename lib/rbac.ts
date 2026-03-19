@@ -87,10 +87,46 @@ export function enforceRole(
       .single()
 
     if (error) {
-      // Distinguish "user row missing" from infrastructure errors
+      // User row is missing — provision it (mirrors getCurrentUser auto-provision logic)
       if ((error as { code?: string }).code === 'PGRST116') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        const email = session.user.email
+        if (!email) {
+          // Cannot provision a user record without an email address
+          return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const now = new Date().toISOString()
+        const resetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+
+        const { data: provisioned, error: upsertError } = await adminClient
+          .from('users')
+          .upsert(
+            {
+              id: session.user.id,
+              email,
+              subscription_tier: 'free',
+              usage_count: 0,
+              usage_reset_at: resetAt,
+              banned: false,
+              created_at: now,
+              updated_at: now,
+            },
+            { onConflict: 'id', ignoreDuplicates: false },
+          )
+          .select('id, subscription_tier')
+          .single()
+
+        if (upsertError || !provisioned) {
+          return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+        }
+
+        if (!hasRole(provisioned as RbacUser, roles)) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        }
+
+        return handler(req, provisioned as RbacUser)
       }
+
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 

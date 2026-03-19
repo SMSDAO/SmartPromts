@@ -297,4 +297,56 @@ describe('enforceRole', () => {
     expect(res.status).toBe(500)
     expect(handler).not.toHaveBeenCalled()
   })
+
+  it('auto-provisions a missing user row (PGRST116) and proceeds with role check', async () => {
+    const { createServerSupabaseClient, createAdminClient } = await import('../../lib/supabase')
+    const { NextResponse } = await import('next/server')
+
+    vi.mocked(createServerSupabaseClient).mockResolvedValueOnce({
+      auth: {
+        getSession: vi.fn().mockResolvedValue({
+          data: { session: { user: { id: 'new-user', email: 'new@example.com' } } },
+          error: null,
+        }),
+      },
+    } as any)
+
+    const fromMock = vi.fn()
+      // First call: initial lookup → PGRST116 (row missing)
+      .mockReturnValueOnce({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'Row not found', code: 'PGRST116' },
+        }),
+      })
+      // Second call: upsert → returns provisioned free-tier user
+      .mockReturnValueOnce({
+        upsert: vi.fn(() => ({
+          select: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'new-user', subscription_tier: 'free' },
+            error: null,
+          }),
+        })),
+      })
+
+    vi.mocked(createAdminClient).mockReturnValueOnce({
+      from: fromMock,
+    } as any)
+
+    const { enforceRole } = await import('../../lib/rbac')
+    const handler = vi.fn().mockResolvedValue(NextResponse.json({ ok: true }))
+    // Require 'user' role — provisioned user (free tier → 'user' role) should satisfy this
+    const protected_ = enforceRole(handler, ['user'])
+
+    const res = await protected_({ url: 'http://localhost/' } as any)
+    expect(res.status).toBe(200)
+    expect(handler).toHaveBeenCalledOnce()
+    expect(handler).toHaveBeenCalledWith(
+      expect.anything(),
+      { id: 'new-user', subscription_tier: 'free' },
+    )
+  })
 })

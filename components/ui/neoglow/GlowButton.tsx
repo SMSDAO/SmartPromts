@@ -39,6 +39,7 @@ export function GlowButton({
 }: GlowButtonProps) {
   return (
     <button
+      type="button"
       disabled={disabled}
       className={clsx(
         'relative inline-flex items-center justify-center font-semibold',

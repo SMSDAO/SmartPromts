@@ -22,6 +22,7 @@ export const GlowInput = forwardRef<HTMLInputElement, GlowInputProps>(
     // duplicate id collisions when the same label text is used multiple times.
     const generatedId = useId()
     const inputId = id ?? (label ? generatedId : undefined)
+    const errorId = error ? `${generatedId}-error` : undefined
 
     return (
       <div className="flex flex-col gap-1.5">
@@ -33,6 +34,8 @@ export const GlowInput = forwardRef<HTMLInputElement, GlowInputProps>(
         <input
           ref={ref}
           id={inputId}
+          aria-invalid={error ? true : false}
+          aria-describedby={errorId}
           className={clsx(
             'w-full rounded-xl border bg-white/5 px-4 py-2.5 text-sm text-white',
             'backdrop-blur-sm placeholder-gray-500 outline-none',
@@ -44,7 +47,11 @@ export const GlowInput = forwardRef<HTMLInputElement, GlowInputProps>(
           )}
           {...props}
         />
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {error && (
+          <p id={errorId} role="alert" className="text-xs text-red-400">
+            {error}
+          </p>
+        )}
       </div>
     )
   },

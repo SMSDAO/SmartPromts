@@ -67,6 +67,10 @@ Protected paths:
 - `/dashboard/*` — requires authentication
 - `/admin/*` — requires `admin` tier
 - `/developer/*` — requires `admin` or `developer` tier
+- `/benchmarks/*` — requires `admin` or `developer` tier
+- `/experiments/*` — requires `admin` or `developer` tier
+- `/tuning/*` — requires `admin` or `developer` tier
+- `/agents/*` — requires `admin` or `developer` tier
 
 ### Route Group Layouts
 
