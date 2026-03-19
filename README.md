@@ -23,16 +23,38 @@ AI Smart Prompts Optimized for any Agent, Any Model - with advanced caching, dyn
 - **AI-Powered Prompt Optimization** - Transform your prompts for better clarity and effectiveness
 - **Multi-Model Support** - Optimized for GPT-4, Claude, Gemini, and more
 - **Supabase Authentication** - Secure magic link login with session management
+- **Role-Based Access Control (RBAC)** - Three-tier roles: admin, developer, user — enforced server-side
 - **Stripe Billing Integration** - Tiered subscriptions (Free, Pro, Enterprise)
 - **Usage Limiting** - Tier-based monthly usage tracking and limits
 - **Rate Limiting** - Protect your API from abuse
-- **Modern UI** - Beautiful responsive interface with dark mode
-- **TypeScript + Next.js 14** - Built with the latest app directory features
+- **Neo Glow UI** - Glassmorphism design system with animated glow effects (TailwindCSS)
+- **Audit Logging** - Full audit trail of privileged actions
+- **TypeScript + Next.js 15** - Built with the latest App Router features
 - **Production Ready** - Complete with middleware, error handling, and security
+
+## 🔐 RBAC Architecture
+
+Access control is enforced at three layers:
+
+| Layer | Mechanism | Location |
+|-------|-----------|----------|
+| Route | Next.js Middleware | `middleware.ts` |
+| Layout | Server Component redirect | `app/(admin)/layout.tsx` etc. |
+| API | `enforceRole` / `withRole` | `lib/rbac.ts` |
+
+**Roles** (derived server-side from `subscription_tier`):
+
+| Role | Description |
+|------|-------------|
+| `admin` | Full access: user management, billing, audit logs, all dev features |
+| `developer` | Dev tools: prompt builder, datasets, benchmarks, experiments, tuning |
+| `user` | End-user features: dashboard, marketplace, subscriptions |
+
+See [docs/rbac.md](docs/rbac.md) for full architecture documentation.
 
 ## 📋 Tech Stack
 
-- **Framework**: Next.js 14 with App Router
+- **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Database & Auth**: Supabase
