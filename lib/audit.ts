@@ -59,7 +59,7 @@ export interface AuditLog extends AuditEvent {
 // ---------------------------------------------------------------------------
 
 /**
- * Persist an audit event to the `audit_logs` collection.
+ * Persist an audit event to the `audit_logs` table.
  *
  * Failures are non-fatal – they are logged to stderr but never thrown to
  * avoid blocking the primary business operation.
