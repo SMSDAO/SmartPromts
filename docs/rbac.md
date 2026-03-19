@@ -43,7 +43,7 @@ await logAuditEvent({
 })
 ```
 
-Audit events are stored in the `audit_logs` Supabase collection. Failures are non-fatal.
+Audit events are stored in the `audit_logs` Supabase table. Failures are non-fatal.
 
 ### Frontend guard (`components/guards/RoleGuard.tsx`)
 

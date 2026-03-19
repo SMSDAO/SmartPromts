@@ -14,7 +14,13 @@ import type { SubscriptionTier } from './auth'
 // Types
 // ---------------------------------------------------------------------------
 
-/** Three-tier role hierarchy used throughout the app */
+/**
+ * Discrete role values used throughout the app.
+ *
+ * Roles are mutually exclusive — `hasRole` performs a strict equality check
+ * with no inheritance. Callers must explicitly list every role that should be
+ * granted access (e.g. `['admin', 'developer']` rather than just `['developer']`).
+ */
 export type Role = 'admin' | 'developer' | 'user'
 
 /** Minimal user shape required by RBAC helpers */
@@ -72,7 +78,13 @@ export function enforceRole(
     const supabase = await createServerSupabaseClient()
     const {
       data: { session },
+      error: sessionError,
     } = await supabase.auth.getSession()
+
+    if (sessionError) {
+      // Auth infrastructure failure — not an authentication problem
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    }
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

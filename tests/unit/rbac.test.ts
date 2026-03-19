@@ -176,6 +176,26 @@ describe('enforceRole', () => {
     vi.clearAllMocks()
   })
 
+  it('returns 500 when getSession returns an auth infrastructure error', async () => {
+    const { createServerSupabaseClient } = await import('../../lib/supabase')
+    vi.mocked(createServerSupabaseClient).mockResolvedValueOnce({
+      auth: {
+        getSession: vi.fn().mockResolvedValue({
+          data: { session: null },
+          error: { message: 'Auth service unavailable', status: 503 },
+        }),
+      },
+    } as any)
+
+    const { enforceRole } = await import('../../lib/rbac')
+    const handler = vi.fn()
+    const protected_ = enforceRole(handler, ['admin'])
+
+    const res = await protected_({ url: 'http://localhost/' } as any)
+    expect(res.status).toBe(500)
+    expect(handler).not.toHaveBeenCalled()
+  })
+
   it('returns 401 when there is no active session', async () => {
     const { createServerSupabaseClient } = await import('../../lib/supabase')
     vi.mocked(createServerSupabaseClient).mockResolvedValueOnce({
