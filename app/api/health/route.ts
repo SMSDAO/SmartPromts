@@ -9,6 +9,7 @@ export async function GET() {
     status: 'ok',
     version: process.env.npm_package_version ?? '1.0.0',
     timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV,
     latency_ms: Date.now() - startTime,
   }
 
