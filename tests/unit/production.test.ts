@@ -241,8 +241,8 @@ describe('lib/validators/optimize – OptimizeResponseSchema', () => {
   })
 
   it('rejects negative tokensEstimate', () => {
-    const r = { ...validResponse, data: { ...validResponse.data, tokensEstimate: -1 } }
-    expect(OptimizeResponseSchema.safeParse(r).success).toBe(false)
+    const invalidResponse = { ...validResponse, data: { ...validResponse.data, tokensEstimate: -1 } }
+    expect(OptimizeResponseSchema.safeParse(invalidResponse).success).toBe(false)
   })
 
   it('rejects missing required data fields', () => {
