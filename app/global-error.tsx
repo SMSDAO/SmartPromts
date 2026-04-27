@@ -50,6 +50,7 @@ export default function GlobalError({ error, reset }: ErrorPageProps) {
           )}
           <div className="flex gap-3">
             <button
+              type="button"
               onClick={reset}
               className="rounded-md bg-cyan-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
             >

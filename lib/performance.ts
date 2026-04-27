@@ -1,9 +1,11 @@
 /**
  * Performance monitoring utilities.
  *
- * Tracks API response times, database query durations, and Web Vitals.
- * Structured output is emitted via the shared logger so metrics appear in
- * production log streams without requiring a separate sink.
+ * Tracks API response times and database query durations via the shared
+ * structured logger.  These functions are **server-only** – do not import
+ * this module from client components.
+ *
+ * For Web Vitals reporting in client components use `lib/performance.client.ts`.
  *
  * Swap the logger calls for real APM SDK calls (Datadog, New Relic, etc.)
  * as needed.
@@ -60,39 +62,6 @@ export function recordDbLatency(
   metadata?: Record<string, unknown>,
 ): void {
   logger.debug({ operation, durationMs, ...metadata }, 'db.latency')
-}
-
-// ---------------------------------------------------------------------------
-// Web Vitals (client-side)
-// ---------------------------------------------------------------------------
-
-export interface WebVitalsMetric {
-  name: string
-  value: number
-  rating: 'good' | 'needs-improvement' | 'poor'
-  id: string
-}
-
-/**
- * Report a Web Vitals metric.
- * Intended for use in `app/layout.tsx` via the `reportWebVitals` export.
- *
- * @example
- * // app/layout.tsx
- * export function reportWebVitals(metric: WebVitalsMetric) {
- *   reportVital(metric)
- * }
- */
-export function reportVital(metric: WebVitalsMetric): void {
-  logger.info(
-    {
-      metricName: metric.name,
-      value: metric.value,
-      rating: metric.rating,
-      id: metric.id,
-    },
-    'web.vital',
-  )
 }
 
 // ---------------------------------------------------------------------------

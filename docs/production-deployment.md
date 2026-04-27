@@ -160,7 +160,7 @@ NODE_ENV=production node server.js | npx pino-pretty
 
 ## Error Tracking
 
-Error tracking is pre-wired via `lib/error-tracking.ts`. The default implementation logs errors through Pino. To integrate a real error monitoring service:
+Error tracking is pre-wired via `lib/error-tracking.ts`. The default implementation uses `console.error` / `console.warn` as a no-op placeholder — errors are logged to stdout but not forwarded to an external service. To integrate a real error monitoring service:
 
 ### Sentry Integration Example
 
@@ -194,7 +194,7 @@ Error tracking is pre-wired via `lib/error-tracking.ts`. The default implementat
 
 The application includes two Next.js App Router error boundaries:
 
-- `app/error.tsx` – Root-level boundary. Catches errors in any route.
+- `app/global-error.tsx` – Root-level boundary. Catches errors in any route.
 - `app/(user)/dashboard/error.tsx` – Dashboard-specific boundary with contextual messaging.
 
 Both boundaries forward errors to `captureException` and provide a **Try again** button that triggers a re-render without a full page reload.

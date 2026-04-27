@@ -6,54 +6,13 @@
  *  - lib/performance.ts
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { z } from 'zod'
+import { configSchema } from '../../lib/config.schema'
 
 // ---------------------------------------------------------------------------
-// lib/config – schema tests (avoid importing the module which throws at
-// startup when env vars are absent)
+// lib/config – schema tests (configSchema is exported from lib/config)
 // ---------------------------------------------------------------------------
-
-const configSchema = z.object({
-  supabase: z.object({
-    url: z.string().url(),
-    anonKey: z.string().min(1),
-    serviceRoleKey: z.string().min(1).optional(),
-  }),
-  openai: z.object({
-    apiKey: z.string().min(1),
-    defaultModel: z.string().default('gpt-4-turbo-preview'),
-  }),
-  stripe: z.object({
-    secretKey: z.string().min(1).optional(),
-    publishableKey: z.string().min(1).optional(),
-    webhookSecret: z.string().min(1).optional(),
-    priceIds: z.object({
-      free: z.string().default(''),
-      pro: z.string().default(''),
-      enterprise: z.string().default(''),
-      lifetime: z.string().default(''),
-    }),
-  }),
-  upstash: z.object({
-    restUrl: z.string().url().optional(),
-    restToken: z.string().min(1).optional(),
-  }),
-  app: z.object({
-    url: z.string().url().default('http://localhost:3000'),
-    nodeEnv: z.enum(['development', 'test', 'production']).default('development'),
-    version: z.string().default('1.0.0'),
-  }),
-  nft: z.object({
-    contractAddress: z.string().optional(),
-    publicContractAddress: z.string().optional(),
-    chainId: z.coerce.number().optional(),
-    rpcUrl: z.string().url().optional(),
-  }),
-  walletConnect: z.object({
-    projectId: z.string().optional(),
-  }),
-})
 
 const validConfig = {
   supabase: {
@@ -107,11 +66,11 @@ describe('lib/config – configuration schema', () => {
     }
   })
 
-  it('allows optional upstash fields to be absent', () => {
+  it('applies default chainId 8453 for Base when absent', () => {
     const result = configSchema.safeParse(validConfig)
     expect(result.success).toBe(true)
     if (result.success) {
-      expect(result.data.upstash.restUrl).toBeUndefined()
+      expect(result.data.nft.chainId).toBe(8453)
     }
   })
 })
@@ -257,6 +216,38 @@ describe('lib/validators/optimize – OptimizeRequestSchema', () => {
         context: 'x'.repeat(5_001),
       }).success,
     ).toBe(false)
+  })
+})
+
+describe('lib/validators/optimize – OptimizeResponseSchema', () => {
+  const validResponse = {
+    success: true,
+    data: {
+      original: 'Write a poem',
+      optimized: 'Compose a short poem',
+      improvements: ['clearer', 'concise'],
+      tokensEstimate: 12,
+    },
+    usage: {
+      remaining: 9,
+      limit: 10,
+      resetAt: '2024-01-01T00:00:00Z',
+      tier: 'pro',
+    },
+  }
+
+  it('accepts a valid response', () => {
+    expect(OptimizeResponseSchema.safeParse(validResponse).success).toBe(true)
+  })
+
+  it('rejects negative tokensEstimate', () => {
+    const r = { ...validResponse, data: { ...validResponse.data, tokensEstimate: -1 } }
+    expect(OptimizeResponseSchema.safeParse(r).success).toBe(false)
+  })
+
+  it('rejects missing required data fields', () => {
+    const { data: _data, ...noData } = validResponse
+    expect(OptimizeResponseSchema.safeParse(noData).success).toBe(false)
   })
 })
 

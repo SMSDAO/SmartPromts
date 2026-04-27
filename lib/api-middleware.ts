@@ -23,7 +23,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { ZodSchema, ZodError } from 'zod'
 import { rateLimitAsync, type RateLimitOptions } from './rate-limit'
-import { generateRequestId, handleApiError, unauthorized, rateLimited } from './api-error-handler'
+import { generateRequestId, handleApiError, unauthorized, forbidden, rateLimited, badRequest } from './api-error-handler'
 import { logger } from './logger'
 
 // ---------------------------------------------------------------------------
@@ -65,8 +65,12 @@ export function withRequestId(): MiddlewareFn {
       const result = await handler(req, { ...ctx, requestId })
       if (result instanceof NextResponse) {
         result.headers.set('X-Request-Id', requestId)
+        return result
       }
-      return result
+      // Clone a plain Response and attach the request ID header
+      const cloned = new Response(result.body, result)
+      cloned.headers.set('X-Request-Id', requestId)
+      return cloned
     }
 }
 
@@ -86,6 +90,11 @@ export function withValidation<T>(schema: ZodSchema<T>): MiddlewareFn {
         const parsed = schema.parse(raw)
         return handler(req, { ...ctx, body: parsed })
       } catch (err) {
+        if (err instanceof SyntaxError) {
+          return badRequest('Invalid JSON – request body could not be parsed', {
+            requestId: ctx.requestId,
+          })
+        }
         const zodErr = err as ZodError
         if (zodErr?.issues) {
           return handleApiError(zodErr, ctx.requestId)
@@ -121,7 +130,7 @@ export function withAuth(): MiddlewareFn {
       const user = await upsertUser(session.user.id, session.user.email ?? '')
 
       if (user.banned) {
-        return unauthorized('Account suspended – contact support', { requestId: ctx.requestId })
+        return forbidden('Account suspended – contact support', { requestId: ctx.requestId })
       }
 
       return handler(req, { ...ctx, user })
@@ -169,8 +178,12 @@ export function withRateLimit(
       const response = await handler(req, ctx)
       if (response instanceof NextResponse) {
         Object.entries(headers).forEach(([k, v]) => response.headers.set(k, v))
+        return response
       }
-      return response
+      // Clone a plain Response and attach rate-limit headers
+      const cloned = new Response(response.body, response)
+      Object.entries(headers).forEach(([k, v]) => cloned.headers.set(k, v))
+      return cloned
     }
 }
 
