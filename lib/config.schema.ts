@@ -15,7 +15,7 @@ export const configSchema = z.object({
     anonKey: z.string().min(1, { message: 'NEXT_PUBLIC_SUPABASE_ANON_KEY is required' }),
     serviceRoleKey: z
       .string()
-      .min(1, { message: 'SUPABASE_SERVICE_ROLE_KEY is required' })
+      .min(1, { message: 'SUPABASE_SERVICE_ROLE_KEY must be non-empty if provided' })
       .optional(),
   }),
 

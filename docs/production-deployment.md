@@ -160,7 +160,7 @@ NODE_ENV=production node server.js | npx pino-pretty
 
 ## Error Tracking
 
-Error tracking is pre-wired via `lib/error-tracking.ts`. The default implementation uses `console.error` / `console.warn` as a no-op placeholder — errors are logged to stdout but not forwarded to an external service. To integrate a real error monitoring service:
+Error tracking is pre-wired via `lib/error-tracking.ts`. The default implementation uses `console.error` / `console.warn` only in non-production environments as a placeholder; in production it is effectively a no-op until you wire in a real error monitoring service. To integrate a real error monitoring service:
 
 ### Sentry Integration Example
 
