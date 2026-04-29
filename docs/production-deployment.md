@@ -224,7 +224,7 @@ Export `reportWebVitals` from your layout to capture Core Web Vitals:
 ```typescript
 // app/layout.tsx
 import type { NextWebVitalsMetric } from 'next/app'
-import { reportVital } from '@/lib/performance'
+import { reportVital } from '@/lib/performance.client'
 
 export function reportWebVitals(metric: NextWebVitalsMetric) {
   reportVital(metric as Parameters<typeof reportVital>[0])

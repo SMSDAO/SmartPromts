@@ -127,7 +127,14 @@ export function withAuth(): MiddlewareFn {
         return unauthorized('Unauthorized – please log in', { requestId: ctx.requestId })
       }
 
-      const user = await upsertUser(session.user.id, session.user.email ?? '')
+      const email = session.user.email?.trim()
+      if (!email) {
+        return unauthorized('Unauthorized – account email is required', {
+          requestId: ctx.requestId,
+        })
+      }
+
+      const user = await upsertUser(session.user.id, email)
 
       if (user.banned) {
         return forbidden('Account suspended – contact support', { requestId: ctx.requestId })

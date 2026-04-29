@@ -102,7 +102,10 @@ export async function resolveSessionUser(): Promise<User | null> {
 
   if (!session) return null
 
-  return upsertUser(session.user.id, session.user.email ?? '')
+  const email = session.user.email?.trim()
+  if (!email) return null
+
+  return upsertUser(session.user.id, email)
 }
 
 /**

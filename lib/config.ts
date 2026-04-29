@@ -9,6 +9,7 @@
  * configured.
  */
 
+import 'server-only'
 import { configSchema } from './config.schema'
 
 export { configSchema } from './config.schema'
