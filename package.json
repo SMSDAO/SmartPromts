@@ -33,8 +33,8 @@
     "react-dom": "^18.3.1",
     "server-only": "^0.0.1",
     "stripe": "^14.10.0",
-    "viem": "^2.47.2",
-    "wagmi": "^2.19.5",
+    "viem": "^2.51.3",
+    "wagmi": "^3.6.16",
     "zod": "^3.22.4"
   },
   "devDependencies": {
